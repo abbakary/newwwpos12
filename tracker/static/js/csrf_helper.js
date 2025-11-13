@@ -112,3 +112,66 @@ function postJSONWithCSRF(url, data = {}) {
     body: JSON.stringify(data),
   });
 }
+
+/**
+ * Show a toast notification
+ * @param {string} message - The message to display
+ * @param {string} type - The toast type: 'success', 'error', 'warning', 'info'
+ * @param {number} duration - Duration in milliseconds (default 3000)
+ */
+function showToast(message, type = 'info', duration = 3000) {
+  // If showToast function is already defined globally, use it
+  if (typeof window.showToast === 'function' && window.showToast !== arguments.callee) {
+    window.showToast(message, type);
+    return;
+  }
+
+  // Create a simple toast fallback
+  const toastContainer = document.getElementById('toastContainer') || createToastContainer();
+
+  const toast = document.createElement('div');
+  toast.className = `alert alert-${type === 'error' ? 'danger' : type} alert-dismissible fade show`;
+  toast.role = 'alert';
+  toast.style.marginBottom = '10px';
+
+  const iconMap = {
+    success: 'fa-check-circle',
+    error: 'fa-exclamation-circle',
+    warning: 'fa-exclamation-triangle',
+    info: 'fa-info-circle'
+  };
+
+  const icon = iconMap[type] || 'fa-info-circle';
+
+  toast.innerHTML = `
+    <i class="fa ${icon} me-2"></i>${message}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  `;
+
+  toastContainer.appendChild(toast);
+
+  // Auto-remove after duration
+  if (duration > 0) {
+    setTimeout(() => {
+      toast.remove();
+    }, duration);
+  }
+}
+
+/**
+ * Create toast container if it doesn't exist
+ */
+function createToastContainer() {
+  let container = document.getElementById('toastContainer');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'toastContainer';
+    container.style.position = 'fixed';
+    container.style.top = '20px';
+    container.style.right = '20px';
+    container.style.zIndex = '9999';
+    container.style.maxWidth = '400px';
+    document.body.appendChild(container);
+  }
+  return container;
+}
