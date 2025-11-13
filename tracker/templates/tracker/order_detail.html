@@ -349,11 +349,13 @@
             <div class="time-tracking-stat">
               <span class="time-tracking-label">Actual</span>
               <span class="time-tracking-value" id="timeActualValue">
-                {% if order.actual_duration %}
-                  {{ order.actual_duration }} mins
-                {% else %}
-                  Pending
-                {% endif %}
+                {% with actual_mins=order|actual_time_minutes %}
+                  {% if actual_mins %}
+                    {{ actual_mins|format_minutes }}
+                  {% else %}
+                    Pending
+                  {% endif %}
+                {% endwith %}
               </span>
             </div>
           </div>
