@@ -141,7 +141,7 @@ class OrderStartModal {
   }
 
   prevStep() {
-    if (this.currentStep > 1) {
+    if (this.currentStep > 0) {
       this.showStep(this.currentStep - 1);
     }
   }
@@ -158,7 +158,7 @@ class OrderStartModal {
     });
 
     // Show current step and previous completed steps
-    for (let i = 1; i <= stepNumber; i++) {
+    for (let i = 0; i <= stepNumber; i++) {
       const step = document.getElementById(`step${i}`);
       const badge = document.querySelector(`.step-badge[data-step="${i}"]`);
 
@@ -175,9 +175,9 @@ class OrderStartModal {
     const nextBtn = document.getElementById('nextBtn');
     const submitBtn = document.getElementById('submitBtn');
 
-    prevBtn.style.display = stepNumber === 1 ? 'none' : 'block';
-    nextBtn.style.display = stepNumber === this.totalSteps ? 'none' : 'block';
-    submitBtn.style.display = stepNumber === this.totalSteps ? 'block' : 'none';
+    prevBtn.style.display = stepNumber === 0 ? 'none' : 'block';
+    nextBtn.style.display = stepNumber === this.totalSteps - 1 ? 'none' : 'block';
+    submitBtn.style.display = stepNumber === this.totalSteps - 1 ? 'block' : 'none';
 
     this.currentStep = stepNumber;
 
