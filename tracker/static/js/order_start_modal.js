@@ -6,9 +6,11 @@
 class OrderStartModal {
   constructor() {
     this.modal = null;
-    this.currentStep = 1;
-    this.totalSteps = 3;
+    this.currentStep = 0;
+    this.totalSteps = 4;
     this.formData = {};
+    this.foundCustomer = null;
+    this.foundVehicle = null;
     this.init();
   }
 
