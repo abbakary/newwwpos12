@@ -24,6 +24,27 @@ class OrderStartModal {
   attachEventListeners() {
     const self = this;
 
+    // Quick lookup functionality
+    const quickSearchBtn = document.getElementById('quickSearchBtn');
+    const skipQuickStartBtn = document.getElementById('skipQuickStartBtn');
+    const quickSearchPlate = document.getElementById('quickSearchPlate');
+
+    if (quickSearchBtn) {
+      quickSearchBtn.addEventListener('click', () => self.performQuickLookup());
+    }
+
+    if (skipQuickStartBtn) {
+      skipQuickStartBtn.addEventListener('click', () => self.skipQuickLookup());
+    }
+
+    if (quickSearchPlate) {
+      quickSearchPlate.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          self.performQuickLookup();
+        }
+      });
+    }
+
     // Order type selection
     document.querySelectorAll('.order-type-option').forEach(option => {
       option.addEventListener('click', function(e) {
