@@ -408,24 +408,16 @@
                         <small class="text-muted d-block fw-medium">Est</small>
                         <div class="time-value fw-semibold">{{ o.estimated_duration|format_minutes }}</div>
                       </div>
-                      {% if o.status == 'completed' and o.actual_duration %}
-                        <div class="time-divider text-muted small">→</div>
-                        <div class="time-item">
-                          <small class="text-muted d-block fw-medium">Actual</small>
-                          <div class="time-value fw-semibold">{{ o.actual_duration|format_minutes }}</div>
-                        </div>
-                        <div class="time-status">
-                          {% with lbl=o|eta_status_label %}
-                            <span class="badge {{ o|eta_status_badge }} rounded-pill badge-sm">{{ lbl }}</span>
-                          {% endwith %}
-                        </div>
-                      {% elif o.status == 'in_progress' or o.status == 'created' or o.status == 'overdue' %}
-                        <div class="time-divider text-muted small">→</div>
-                        <div class="time-item">
-                          <small class="text-muted d-block fw-medium">Elapsed</small>
-                          <div class="time-value fw-semibold">{{ o|elapsed_minutes|format_minutes }}</div>
-                        </div>
-                      {% endif %}
+                      <div class="time-divider text-muted small">→</div>
+                      <div class="time-item">
+                        <small class="text-muted d-block fw-medium">Actual</small>
+                        <div class="time-value fw-semibold">{{ o|actual_time_minutes|format_minutes }}</div>
+                      </div>
+                      <div class="time-status">
+                        {% with lbl=o|eta_status_label %}
+                          <span class="badge {{ o|eta_status_badge }} rounded-pill badge-sm">{{ lbl }}</span>
+                        {% endwith %}
+                      </div>
                     </div>
                   {% else %}
                     <span class="badge bg-light text-muted">No estimate</span>
