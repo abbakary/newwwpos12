@@ -1966,7 +1966,15 @@ document.addEventListener('DOMContentLoaded', function(){
 
   completeBtn.addEventListener('click', function(e){
     const orderType = '{{ order.type|default:"" }}';
-    if (orderType !== 'service' || !estimatedDuration) {
+
+    // Only check overrun for service and sales orders with estimated duration
+    if (orderType !== 'service' && orderType !== 'sales') {
+      redirectToSignature();
+      return;
+    }
+
+    // If no estimated duration, skip overrun check
+    if (!estimatedDuration) {
       redirectToSignature();
       return;
     }
@@ -1976,6 +1984,7 @@ document.addEventListener('DOMContentLoaded', function(){
     const now = new Date();
     const elapsedMinutes = Math.floor((now - startedAt) / 60000);
 
+    // If elapsed time is within or under estimated duration, proceed to signature
     if (elapsedMinutes <= (Number(estimatedDuration) || 0)){
       redirectToSignature();
       return;
