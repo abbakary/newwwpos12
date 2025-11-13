@@ -888,48 +888,89 @@ def api_record_overrun_reason(request, order_id):
 @login_required
 def overrun_reports(request: HttpRequest):
     """Page showing reported order overruns and KPIs to help staff analyze delays."""
-    from django.db.models import Count, Avg, F
+    from django.db.models import Count, Avg, F, Q, DurationField, ExpressionWrapper, IntegerField
+    from django.db.models.functions import Extract
 
     user_branch = get_user_branch(request.user)
-    qs = Order.objects.all()
+    qs = Order.objects.filter(status='completed').exclude(
+        customer__full_name__startswith='Plate ',
+        customer__phone__startswith='PLATE_'
+    )
     if user_branch:
         qs = qs.filter(branch=user_branch)
 
-    overruns = qs.filter(overrun_reason__isnull=False).order_by('-overrun_reported_at')
+    # Identify overruns: orders where actual_duration > estimated_duration OR calculated duration exceeds estimated
+    # Orders that exceeded ETA are those with either:
+    # 1. actual_duration set and > estimated_duration, OR
+    # 2. completed_at and started_at with time difference > estimated_duration
+    overruns = qs.filter(
+        Q(estimated_duration__isnull=False) & (
+            Q(actual_duration__isnull=False, actual_duration__gt=F('estimated_duration')) |
+            (
+                Q(completed_at__isnull=False, started_at__isnull=False) &
+                Q(completed_at__gt=F('started_at') + ExpressionWrapper(
+                    F('estimated_duration') * 60,  # Convert minutes to seconds
+                    output_field=DurationField()
+                ))
+            )
+        )
+    ).order_by('-completed_at')
+
     total_overruns = overruns.count()
 
-    # Average delay minutes: compute from estimated_duration and actual_duration where available
-    delays = overruns.annotate(delay_minutes=(F('actual_duration') - F('estimated_duration'))).filter(delay_minutes__isnull=False)
-    avg_delay = delays.aggregate(avg=Avg('delay_minutes'))['avg'] if delays.exists() else 0
+    # Calculate actual delay in minutes for each overrun
+    # Use actual_duration if available, otherwise calculate from timestamps
+    overruns_with_delay = []
+    for o in overruns[:100]:  # Process up to 100 for performance
+        try:
+            delay_minutes = None
+            if o.actual_duration and o.estimated_duration:
+                delay_minutes = max(0, int(o.actual_duration) - int(o.estimated_duration))
+            elif o.completed_at and o.started_at and o.estimated_duration:
+                elapsed = (o.completed_at - o.started_at).total_seconds() / 60  # Convert to minutes
+                delay_minutes = max(0, int(elapsed) - int(o.estimated_duration))
+            overruns_with_delay.append((o, delay_minutes))
+        except Exception as e:
+            logger.warning(f"Error calculating delay for order {o.id}: {e}")
+            overruns_with_delay.append((o, None))
+
+    # Calculate average delay
+    delays_list = [d for _, d in overruns_with_delay if d is not None]
+    avg_delay = sum(delays_list) / len(delays_list) if delays_list else 0
 
     completed_late = overruns.filter(status='completed').count()
 
-    # Top reasons
-    top_reasons = overruns.values('overrun_reason').annotate(count=Count('id')).order_by('-count')[:10]
+    # Top reasons (including unreported overruns)
+    # Orders with recorded reasons
+    reasons_with_count = overruns.exclude(overrun_reason__isnull=True, overrun_reason='').values('overrun_reason').annotate(count=Count('id')).order_by('-count')[:10]
+    top_reasons = list(reasons_with_count)
 
-    # Recent overruns with computed delay minutes fallback
+    # Add "Reason not recorded" if there are unreported overruns
+    unreported_count = overruns.filter(Q(overrun_reason__isnull=True) | Q(overrun_reason='')).count()
+    if unreported_count > 0:
+        top_reasons.append({'overrun_reason': '(Reason not recorded)', 'count': unreported_count})
+    top_reasons = sorted(top_reasons, key=lambda x: x['count'], reverse=True)
+
+    # Recent overruns with all data
     recent = []
-    for o in overruns[:50]:
-        try:
-            delay = None
-            if o.actual_duration and o.estimated_duration:
-                delay = max(0, int(o.actual_duration) - int(o.estimated_duration))
-        except Exception:
-            delay = None
+    for o, delay_minutes in overruns_with_delay[:50]:
         recent.append({
             'id': o.id,
             'order_number': o.order_number,
-            'overrun_reason': o.overrun_reason,
+            'customer': o.customer.full_name if o.customer else 'Unknown',
+            'overrun_reason': o.overrun_reason or '(Reason not recorded)',
             'overrun_reported_by': o.overrun_reported_by,
             'overrun_reported_at': o.overrun_reported_at,
-            'delay_minutes': delay,
+            'completed_at': o.completed_at,
+            'delay_minutes': delay_minutes or 0,
+            'status': o.status,
         })
 
     context = {
         'total_overruns': total_overruns,
-        'avg_delay': avg_delay or 0,
+        'avg_delay': round(avg_delay, 1) if avg_delay else 0,
         'completed_late': completed_late,
-        'unique_reasons': top_reasons.count() if hasattr(top_reasons, 'count') else len(top_reasons),
+        'unique_reasons': len(top_reasons),
         'top_reasons': top_reasons,
         'recent_overruns': recent,
     }
