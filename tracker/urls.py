@@ -135,6 +135,7 @@ urlpatterns = [
     path("api/notifications/summary", views.api_notifications_summary),
     path("api/notification/summary/", views.api_notifications_summary, name="api_notifications_summary_singular"),
     path("api/notification/summary", views.api_notifications_summary),
+    path("api/customers/check-exists/", views.api_check_customer_exists, name="api_check_customer_exists"),
     path("api/customers/check-duplicate/", views.api_check_customer_duplicate, name="api_check_customer_duplicate"),
     path("api/service-distribution/", views.api_service_distribution, name="api_service_distribution"),
 
