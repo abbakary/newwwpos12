@@ -262,7 +262,8 @@
                   </button>
                   <ul class="dropdown-menu dropdown-menu-end shadow">
                     <li><a class="dropdown-item" href="{% url 'tracker:customer_detail' pk=c.id %}"><i class="fa fa-eye me-2 text-primary"></i>View Details</a></li>
-                    <li><a class="dropdown-item" href="{% url 'tracker:create_order_for_customer' pk=c.id %}"><i class="fa fa-plus me-2 text-success"></i>New Order</a></li>
+                    <li><button type="button" class="dropdown-item start-order-btn" data-customer-id="{{ c.id }}" data-customer-name="{{ c.full_name }}" data-customer-phone="{{ c.phone }}" data-bs-toggle="modal" data-bs-target="#startOrderModal"><i class="fa fa-rocket me-2 text-success"></i>Start Order</button></li>
+                    <li><a class="dropdown-item" href="{% url 'tracker:create_order_for_customer' pk=c.id %}"><i class="fa fa-plus me-2 text-info"></i>New Order (Traditional)</a></li>
                     <li><a class="dropdown-item" href="{% url 'tracker:customer_edit' pk=c.id %}"><i class="fa fa-edit me-2 text-warning"></i>Edit Customer</a></li>
                     {% if user.is_superuser or user.is_staff %}
                     <li><hr class="dropdown-divider"></li>
