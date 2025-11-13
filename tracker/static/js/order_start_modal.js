@@ -412,6 +412,81 @@ class OrderStartModal {
     document.body.insertBefore(alert, document.body.firstChild);
   }
 
+  performQuickLookup() {
+    const plate = document.getElementById('quickSearchPlate').value.trim().toUpperCase();
+
+    // Hide previous results
+    document.getElementById('quickLookupResult').style.display = 'none';
+    document.getElementById('plateNotFoundAlert').style.display = 'none';
+    document.getElementById('quickLookupError').style.display = 'none';
+
+    if (!plate) {
+      this.showQuickLookupError('Please enter a vehicle plate number');
+      return;
+    }
+
+    // Show loading state
+    const btn = document.getElementById('quickSearchBtn');
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa fa-spinner fa-spin me-2"></i>Searching...';
+
+    // Call API to check plate
+    fetch('/api/orders/check-plate/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCSRFToken() || '',
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      body: JSON.stringify({ plate_number: plate })
+    })
+    .then(r => r.json())
+    .then(data => {
+      btn.disabled = false;
+      btn.innerHTML = originalText;
+
+      if (data.found && data.customer && data.vehicle) {
+        // Show existing customer info
+        document.getElementById('existingCustomerName').textContent = data.customer.full_name;
+        document.getElementById('existingVehicleInfo').textContent = `${data.vehicle.make} ${data.vehicle.model} (${data.vehicle.plate})`;
+        document.getElementById('existingCustomerPhone').textContent = data.customer.phone;
+        document.getElementById('existingOrderStatus').textContent = 'Existing Customer';
+        document.getElementById('quickLookupResult').style.display = 'block';
+
+        // Store customer info for later use
+        this.foundCustomer = data.customer;
+        this.foundVehicle = data.vehicle;
+      } else {
+        // No existing record found
+        document.getElementById('plateNotFoundAlert').style.display = 'block';
+        this.foundCustomer = null;
+        this.foundVehicle = null;
+      }
+    })
+    .catch(error => {
+      btn.disabled = false;
+      btn.innerHTML = originalText;
+      console.error('Lookup error:', error);
+      this.showQuickLookupError('Error checking plate number. Please try again.');
+    });
+  }
+
+  skipQuickLookup() {
+    // Clear plate info and move to next step
+    this.foundCustomer = null;
+    this.foundVehicle = null;
+    this.showStep(1);
+  }
+
+  showQuickLookupError(message) {
+    const errorDiv = document.getElementById('quickLookupError');
+    if (errorDiv) {
+      document.getElementById('quickLookupErrorText').textContent = message;
+      errorDiv.style.display = 'block';
+    }
+  }
+
   open() {
     this.resetForm();
     this.modal.show();
