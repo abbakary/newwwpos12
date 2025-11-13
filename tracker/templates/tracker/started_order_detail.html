@@ -717,11 +717,11 @@
               }
 
               container.innerHTML = 'Loading...';
-              fetch('{% url "tracker:api_service_types" %}', { 
-                method: 'GET', 
-                headers: { 
-                  'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value, 
-                  'X-Requested-With': 'XMLHttpRequest' 
+              fetch('{% url "tracker:api_service_types" %}', {
+                method: 'GET',
+                headers: {
+                  'X-CSRFToken': getCSRFToken() || '',
+                  'X-Requested-With': 'XMLHttpRequest'
                 }
               })
               .then(r => {
