@@ -293,7 +293,7 @@ class OrderStartModal {
     submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Creating...';
 
     // Submit to server using CSRF helper
-    postWithCSRF('/tracker/api/orders/create-from-modal/', formData)
+    postWithCSRF('/api/orders/create-from-modal/', formData)
     .then(response => response.json())
     .then(data => {
       if (data.success) {
