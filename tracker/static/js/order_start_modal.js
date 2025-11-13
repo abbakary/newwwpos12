@@ -369,8 +369,10 @@ class OrderStartModal {
   resetForm() {
     document.getElementById('orderStartForm').reset();
     this.formData = {};
-    this.currentStep = 1;
-    this.showStep(1);
+    this.foundCustomer = null;
+    this.foundVehicle = null;
+    this.currentStep = 0;
+    this.showStep(0);
   }
 
   showError(elementId, message) {
