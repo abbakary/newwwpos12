@@ -270,6 +270,52 @@
   {% block extra_js %}
   <script>
     (function(){
+      // Initialize order type selector
+      document.addEventListener('DOMContentLoaded', function(){
+        const orderTypeCards = document.querySelectorAll('.order-type-card');
+        const orderFormSection = document.getElementById('orderFormSection');
+        const typeSelect = document.getElementById('{{ form.type.id_for_label }}') || document.querySelector('[name="{{ form.type.html_name }}"]');
+
+        orderTypeCards.forEach(card => {
+          card.addEventListener('click', function(){
+            const orderType = this.getAttribute('data-order-type');
+
+            // Handle special cases
+            if (orderType === 'quick') {
+              // Redirect to quick start order page
+              window.location.href = '{% url "tracker:order_start" %}';
+              return;
+            }
+
+            if (orderType === 'orders') {
+              // Redirect to orders list
+              window.location.href = '{% url "tracker:orders_list" %}';
+              return;
+            }
+
+            if (orderType === 'invoice') {
+              // Redirect to invoice create for this customer
+              window.location.href = '{% url "tracker:invoice_create_from_order" order_id=0 %}'.replace('/0/', '/?customer_id={{ customer.id }}');
+              return;
+            }
+
+            // For 'new' order type, show the form section
+            if (orderType === 'new' && orderFormSection) {
+              // Remove previous selection styling
+              orderTypeCards.forEach(c => c.classList.remove('border-primary', 'bg-light'));
+              // Add selection styling to clicked card
+              this.classList.add('border-primary', 'bg-light');
+              // Show form section
+              orderFormSection.style.display = 'block';
+              // Scroll to form
+              setTimeout(() => {
+                orderFormSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }, 100);
+            }
+          });
+        });
+      });
+
       // Handle order type switching
       var typeEl = document.getElementById('{{ form.type.id_for_label }}') || document.querySelector('[name="{{ form.type.html_name }}"]');
       function updateSections(){
