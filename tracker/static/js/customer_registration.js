@@ -96,6 +96,50 @@
         nextBtn.addEventListener('click', function(e){
           e.preventDefault();
           try{
+            // Check if customer already exists before proceeding
+            var phoneInput = document.getElementById('id_phone');
+            if(phoneInput){
+              var phone = (phoneInput.value || '').trim();
+              if(phone){
+                // Check if customer exists
+                fetch('/api/customers/check-exists/?phone=' + encodeURIComponent(phone), {
+                  headers: {'X-Requested-With': 'XMLHttpRequest'}
+                })
+                .then(function(r){ return r.json(); })
+                .then(function(data){
+                  if(data.exists && data.customer){
+                    // Customer exists - show message
+                    var existingAlert = document.createElement('div');
+                    existingAlert.className = 'alert alert-warning alert-dismissible fade show mt-3';
+                    existingAlert.innerHTML = '<strong>Customer Exists!</strong> A customer with this phone number already exists: <strong>' + escapeHtml(data.customer.full_name) + '</strong>. ' +
+                      '<a href="' + escapeHtml(data.customer.detail_url) + '" class="alert-link">View their profile</a> or create an order for them. ' +
+                      '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
+
+                    var formElement = document.getElementById('customerRegistrationForm');
+                    if(formElement){
+                      var existingAlerts = formElement.querySelectorAll('.customer-exists-alert');
+                      existingAlerts.forEach(function(a){ a.remove(); });
+                      existingAlert.className += ' customer-exists-alert';
+                      formElement.insertBefore(existingAlert, formElement.firstChild);
+                    }
+                    return;
+                  }
+                  // Customer does not exist, proceed
+                  proceedToNextStep();
+                })
+                .catch(function(err){
+                  console.error('Error checking customer', err);
+                  proceedToNextStep();
+                });
+                return;
+              }
+            }
+            proceedToNextStep();
+          }catch(err){ console.error('Next click handler error', err); }
+        });
+
+        function proceedToNextStep(){
+          try{
             // ensure save_only is 0
             var saveOnly = document.getElementById('saveOnly'); if(saveOnly) saveOnly.value='0';
             ajaxPostForm(form, function(data){
@@ -116,9 +160,16 @@
                 loadStep(next);
               }catch(err){ console.error('Error handling next response', err); }
             }, function(err){ console.error('AJAX error', err); alert('Request failed: ' + err); });
-          }catch(err){ console.error('Next click handler error', err); }
-        });
+          }catch(err){ console.error('Next click handler error in proceedToNextStep', err); }
+        }
       }
+    }
+
+    // Helper to escape HTML
+    function escapeHtml(text){
+      if(!text) return '';
+      var map = {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'};
+      return text.replace(/[&<>"']/g, function(m){ return map[m]; });
     }
 
     // Save customer quick
