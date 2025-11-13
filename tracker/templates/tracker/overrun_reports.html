@@ -44,7 +44,7 @@
           <ul class="list-group">
             {% for r in top_reasons %}
             <li class="list-group-item d-flex justify-content-between align-items-center">
-              <div>{{ r.reason|default:'(blank)' }}</div>
+              <div>{{ r.overrun_reason|default:'(blank)' }}</div>
               <span class="badge bg-primary rounded-pill">{{ r.count }}</span>
             </li>
             {% empty %}
