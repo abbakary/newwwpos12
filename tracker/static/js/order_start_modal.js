@@ -294,20 +294,36 @@ class OrderStartModal {
 
     // Submit to server using CSRF helper
     postWithCSRF('/api/orders/create-from-modal/', formData)
-    .then(response => response.json())
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      return response.json();
+    })
     .then(data => {
       if (data.success) {
         // Show success message
         this.showSuccessMessage('Order created successfully!');
+
+        // Show toast notification
+        if (typeof showToast === 'function') {
+          showToast(`Order ${data.order_number} created successfully`, 'success');
+        }
 
         // Redirect or close modal
         setTimeout(() => {
           window.location.href = `/tracker/orders/started/${data.order_id}/`;
         }, 1500);
       } else {
-        this.showError('extractedDataError', data.error || 'Failed to create order');
+        const errorMsg = data.error || 'Failed to create order';
+        this.showError('extractedDataError', errorMsg);
         submitBtn.disabled = false;
         submitBtn.innerHTML = originalText;
+
+        // Show toast notification
+        if (typeof showToast === 'function') {
+          showToast(errorMsg, 'error');
+        }
       }
     })
     .catch(error => {
