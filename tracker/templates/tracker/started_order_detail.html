@@ -285,16 +285,19 @@
                         </div>
                       </div>
                     </div>
-                    <div class="modal-footer" style="border-top: 1px solid #dee2e6;">
+                    <div class="modal-footer" style="border-top: 1px solid #dee2e6; padding: 15px;">
                       <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                      <div class="flex-grow-1 text-center">
-                        <small class="text-muted d-block mb-2">Don't have a PDF?</small>
-                        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="tab" data-bs-target="#manualTabPane">
-                          <i class="fa fa-pencil me-1"></i>Enter Details Manually
+                      <div style="flex: 1; text-align: center; margin: 0 15px;">
+                        <p class="text-muted small mb-2">
+                          <i class="fa fa-info-circle me-1"></i>
+                          Can't find a PDF? No problem!
+                        </p>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" id="skipUploadManualBtn" data-bs-toggle="tab" data-bs-target="#manualTabPane">
+                          <i class="fa fa-pencil me-1"></i>Enter Manually Instead
                         </button>
                       </div>
-                      <button type="button" id="startedUploadBtn" class="btn btn-primary btn-lg">
-                        <i class="fa fa-upload me-2"></i>Upload & Extract
+                      <button type="button" id="startedUploadBtn" class="btn btn-primary btn-lg" style="min-width: 160px;">
+                        <i class="fa fa-upload me-2"></i>Upload PDF
                       </button>
                     </div>
                   </div>
