@@ -291,6 +291,15 @@
                       <input type="hidden" name="selected_order_id" value="{{ order.id }}">
                       {% if vehicle and vehicle.plate_number %}<input type="hidden" name="plate" value="{{ vehicle.plate_number }}">{% endif %}
                       <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+                        <!-- Existing Customer Alert -->
+                        <div id="existingCustomerAlert" class="alert alert-info alert-dismissible fade show" style="display:none;">
+                          <i class="fa fa-info-circle me-2"></i>
+                          <strong>Existing Customer Found!</strong> A customer with this phone number already exists in the database.
+                          <span id="existingCustomerName"></span>
+                          You can update the information if needed or just use the existing customer.
+                          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+
                         <!-- Customer Section -->
                         <div class="card mb-3">
                           <div class="card-header bg-light">
@@ -300,11 +309,11 @@
                             <div class="row mb-2">
                               <div class="col-md-6">
                                 <label class="form-label">Full Name *</label>
-                                <input type="text" name="customer_name" class="form-control" value="{{ order.customer.full_name }}" placeholder="Customer full name" required>
+                                <input type="text" name="customer_name" class="form-control" id="manualCustomerName" value="{{ order.customer.full_name }}" placeholder="Customer full name" required>
                               </div>
                               <div class="col-md-6">
                                 <label class="form-label">Phone *</label>
-                                <input type="tel" name="customer_phone" class="form-control" placeholder="Phone number" required>
+                                <input type="tel" name="customer_phone" class="form-control" id="manualCustomerPhone" placeholder="Phone number" required>
                               </div>
                             </div>
                             <div class="row mb-2">
