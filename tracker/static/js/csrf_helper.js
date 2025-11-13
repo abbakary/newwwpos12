@@ -58,18 +58,24 @@ function fetchWithCSRF(url, options = {}) {
  * @returns {Promise} The fetch promise
  */
 function postWithCSRF(url, data = {}) {
-  const formData = data instanceof FormData ? data : new FormData();
+  let formData;
 
-  // If data is a plain object (not FormData), convert it
-  if (!(data instanceof FormData) && typeof data === 'object') {
-    Object.keys(data).forEach(key => {
-      formData.append(key, data[key]);
-    });
+  // If data is already FormData, use it directly
+  if (data instanceof FormData) {
+    formData = data;
+  } else {
+    // Create new FormData and populate from object
+    formData = new FormData();
+    if (typeof data === 'object') {
+      Object.keys(data).forEach(key => {
+        formData.append(key, data[key]);
+      });
+    }
   }
 
-  // Add CSRF token to form data
+  // Add CSRF token to form data if not already present
   const csrfToken = getCSRFToken();
-  if (csrfToken && !data.csrfmiddlewaretoken) {
+  if (csrfToken) {
     formData.append('csrfmiddlewaretoken', csrfToken);
   }
 
