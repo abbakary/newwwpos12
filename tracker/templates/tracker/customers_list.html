@@ -570,6 +570,32 @@
     overflow: hidden;
 }
 
+/* Order Method Button Styles */
+.order-method-btn {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 15px;
+    transition: all 0.3s ease;
+    border-width: 2px;
+}
+
+.order-method-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.order-method-btn.active {
+    border-color: #198754 !important;
+    background-color: rgba(25, 135, 84, 0.05);
+}
+
+.order-method-btn i {
+    font-size: 24px;
+    margin-right: 15px;
+    min-width: 30px;
+}
+
 .kpi-card:hover {
     transform: translateY(-5px);
     box-shadow: 0 10px 20px rgba(0,0,0,0.1);
