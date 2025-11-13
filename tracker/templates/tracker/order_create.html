@@ -424,10 +424,14 @@
       // Select a customer
       function selectCustomer(customer) {
         document.getElementById('customerName').textContent = customer.name;
-        document.getElementById('customerPhone').textContent = customer.phone || 'N/A';
-        document.getElementById('customerEmail').textContent = customer.email || 'N/A';
-        document.getElementById('customerType').textContent = customer.customer_type_display || 'Personal';
-        
+        const phoneEl = document.getElementById('customerPhone');
+        const emailEl = document.getElementById('customerEmail');
+        const typeEl = document.getElementById('customerType');
+
+        if (phoneEl) phoneEl.innerHTML = `<i class="fa fa-phone me-1"></i>${customer.phone || 'No phone'}`;
+        if (emailEl) emailEl.innerHTML = `<i class="fa fa-envelope me-1"></i>${customer.email || 'No email'}`;
+        if (typeEl) typeEl.innerHTML = `<span class="badge bg-info">${customer.customer_type_display || 'Personal'}</span>`;
+
         // Store customer ID in a hidden field
         let customerIdField = document.querySelector('input[name="customer_id"]');
         if (!customerIdField) {
@@ -437,14 +441,30 @@
           customerForm.prepend(customerIdField);
         }
         customerIdField.value = customer.id;
-        
+
+        // Store customer data for use in Start Order
+        window.selectedCustomerData = customer;
+
         // Show selected customer and hide search
         selectedCustomer.style.display = 'block';
         searchResults.style.display = 'none';
         searchInput.value = '';
-        
+
         // Load customer's vehicles
         loadCustomerVehicles(customer.id);
+      }
+
+      // Handle Start Order button
+      const startOrderBtn = document.getElementById('startOrderBtn');
+      if (startOrderBtn && customerForm) {
+        startOrderBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          const customerId = document.querySelector('input[name="customer_id"]').value;
+          if (customerId) {
+            // Redirect to the order form for this customer with focus on upload
+            window.location.href = `/customers/${customerId}/order/new/?focus=upload`;
+          }
+        });
       }
 
       // Load customer's vehicles
