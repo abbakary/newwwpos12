@@ -191,6 +191,9 @@ class OrderStartModal {
     this.clearAllErrors();
 
     switch (stepNumber) {
+      case 0:
+        // Step 0 (quick lookup) is optional - always return true
+        return true;
       case 1:
         return this.validateOrderType();
       case 2:
