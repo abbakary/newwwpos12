@@ -407,3 +407,43 @@ def get_remaining_eta_minutes(order) -> int:
         return max(0, int(remaining_seconds // 60))
     except Exception:
         return 0
+
+
+@register.filter(name='actual_time_minutes')
+def actual_time_minutes(order) -> int:
+    """
+    Calculate actual time spent on an order in minutes.
+    For completed orders: completed_at - (started_at or created_at)
+    For in-progress orders: now - (started_at or created_at)
+    Returns 0 if unable to calculate.
+    """
+    try:
+        from django.utils import timezone
+
+        if not order:
+            return 0
+
+        # Determine start time (use started_at if available, otherwise created_at)
+        start_time = order.started_at or order.created_at
+        if not start_time:
+            return 0
+
+        # Ensure timezone aware
+        if timezone.is_naive(start_time):
+            start_time = timezone.make_aware(start_time)
+
+        # Determine end time (use completed_at for completed orders, now for others)
+        if order.completed_at:
+            end_time = order.completed_at
+            if timezone.is_naive(end_time):
+                end_time = timezone.make_aware(end_time)
+        else:
+            end_time = timezone.now()
+
+        # Calculate difference in minutes
+        delta = end_time - start_time
+        total_minutes = int(max(0, delta.total_seconds() // 60))
+
+        return total_minutes
+    except Exception:
+        return 0
