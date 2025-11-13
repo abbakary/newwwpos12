@@ -396,6 +396,19 @@ def started_order_detail(request, order_id):
                 inv.calculate_totals()
                 inv.save()
 
+                # IMPORTANT: Preserve extracted Net, VAT, and Gross values from the form submission
+                # This ensures extracted invoice data is preserved for dashboard KPI calculations
+                extracted_subtotal = Decimal(str(subtotal or '0').replace(',', ''))
+                extracted_tax = Decimal(str(tax_amount or '0').replace(',', ''))
+                extracted_total = Decimal(str(total_amount or '0').replace(',', ''))
+
+                # Only override if extracted values are provided (non-zero)
+                if extracted_subtotal > 0 or extracted_tax > 0 or extracted_total > 0:
+                    inv.subtotal = extracted_subtotal
+                    inv.tax_amount = extracted_tax
+                    inv.total_amount = extracted_total or (extracted_subtotal + extracted_tax)
+                    inv.save(update_fields=['subtotal', 'tax_amount', 'total_amount'])
+
                 # Update started order if applicable
                 try:
                     order = OrderService.update_order_from_invoice(
