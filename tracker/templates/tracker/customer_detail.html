@@ -349,6 +349,17 @@
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end">
                     <li>
+                        <a class="dropdown-item" href="{% url 'tracker:invoice_create' %}?customer_id={{ customer.pk }}">
+                            <i class="fa fa-file-invoice-dollar me-2"></i>Create Invoice
+                        </a>
+                    </li>
+                    <li>
+                        <button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#uploadInvoiceModal">
+                            <i class="fa fa-file-upload me-2"></i>Upload Invoice
+                        </button>
+                    </li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li>
                         <button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#addVehicleModal">
                             <i class="fa fa-car me-2"></i>Add Vehicle
                         </button>
