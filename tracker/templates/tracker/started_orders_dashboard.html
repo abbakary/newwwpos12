@@ -270,12 +270,13 @@
               <i class="fa fa-file-upload me-1"></i>Documents
             </a>
             {% if order.status != 'completed' %}
-            <form method="post" action="{% url 'tracker:complete_order' pk=order.id %}" class="flex-fill" onsubmit="return confirm('Mark this order as completed?');">
-              {% csrf_token %}
-              <button type="submit" class="btn btn-sm btn-outline-success w-100">
-                <i class="fa fa-check me-1"></i>Complete
-              </button>
-            </form>
+            <button type="button" class="btn btn-sm btn-outline-success w-100 complete-order-btn" data-order-id="{{ order.id }}" data-order-number="{{ order.order_number }}">
+              <i class="fa fa-check me-1"></i>Complete
+            </button>
+            {% else %}
+            <span class="btn btn-sm btn-success w-100 disabled" style="pointer-events: none;">
+              <i class="fa fa-check me-1"></i>Completed
+            </span>
             {% endif %}
           </div>
         </div>
