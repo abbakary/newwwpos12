@@ -1155,7 +1155,25 @@
                     if (!extractData.success){
                       if (uploadProgress) uploadProgress.style.display = 'none';
                       const errorMsg = extractData.message || 'Could not extract data from PDF.';
-                      showError(`<i class="fa fa-warning me-2"></i>${errorMsg}<br><small>Switch to <strong>Enter Manually</strong> tab to enter details.</small>`, false);
+                      showError(`
+                        <div>
+                          <i class="fa fa-warning me-2"></i><strong>PDF could not be processed</strong>
+                          <p class="small mt-2 mb-0">${errorMsg}</p>
+                          <p class="small mt-2 mb-0">No worries! You can <button type="button" class="btn btn-link btn-sm p-0" id="switchToManualBtn" data-bs-toggle="tab" data-bs-target="#manualTabPane" onclick="document.getElementById('invoiceManualTab').click(); return false;"><strong>enter the details manually</strong></button> instead.</p>
+                        </div>
+                      `, false);
+
+                      // Add click handler for the manual button
+                      const switchBtn = document.getElementById('switchToManualBtn');
+                      if (switchBtn) {
+                        switchBtn.addEventListener('click', function() {
+                          const manualTab = document.getElementById('invoiceManualTab');
+                          if (manualTab) {
+                            const tab = new bootstrap.Tab(manualTab);
+                            tab.show();
+                          }
+                        });
+                      }
                       return;
                     }
 
