@@ -420,6 +420,69 @@
 {% block extra_js %}
 <script>
 (function(){
+  // Start Order Modal Handler
+  const startOrderModal = document.getElementById('startOrderModal');
+  if (startOrderModal) {
+    let selectedMethod = null;
+    let currentCustomerId = null;
+
+    // Open modal and populate data
+    startOrderModal.addEventListener('show.bs.modal', function(e) {
+      const btn = e.relatedTarget;
+      if (!btn) return;
+
+      currentCustomerId = btn.getAttribute('data-customer-id');
+      const customerName = btn.getAttribute('data-customer-name');
+      const customerPhone = btn.getAttribute('data-customer-phone');
+
+      document.getElementById('modalCustomerName').textContent = customerName;
+      document.getElementById('modalCustomerPhone').textContent = customerPhone;
+
+      // Reset selection
+      selectedMethod = null;
+      document.getElementById('proceedOrderBtn').disabled = true;
+      document.querySelectorAll('.order-method-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+    });
+
+    // Method selection
+    document.querySelectorAll('.order-method-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        selectedMethod = this.getAttribute('data-method');
+
+        // Update UI
+        document.querySelectorAll('.order-method-btn').forEach(b => {
+          b.classList.remove('active', 'border-primary');
+        });
+        this.classList.add('active', 'border-primary');
+
+        // Enable proceed button
+        document.getElementById('proceedOrderBtn').disabled = false;
+      });
+    });
+
+    // Proceed button handler
+    document.getElementById('proceedOrderBtn').addEventListener('click', function() {
+      if (!selectedMethod || !currentCustomerId) return;
+
+      const bs = bootstrap.Modal.getInstance(startOrderModal);
+      if (bs) bs.hide();
+
+      if (selectedMethod === 'quick') {
+        // Redirect to quick start order page
+        window.location.href = '{% url "tracker:order_start" %}?customer_id=' + currentCustomerId;
+      } else if (selectedMethod === 'form') {
+        // Redirect to order create form page
+        window.location.href = '{% url "tracker:create_order_for_customer" pk=0 %}'.replace('/0/', '/' + currentCustomerId + '/');
+      }
+    });
+  }
+})();
+</script>
+
+<script>
+(function(){
   function typeBadge(t){
     switch(t){
       case 'government': return '<span class="badge bg-primary rounded-pill"><i class="fa fa-building me-1"></i>Government</span>';
