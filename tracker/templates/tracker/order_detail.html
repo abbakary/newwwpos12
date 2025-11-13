@@ -1139,6 +1139,16 @@
     }catch(e){ return false; }
   }
 
+  function openSignatureModal(){
+    if (overrunModal) {
+      const instance = bootstrap.Modal.getInstance(overrunModalEl);
+      if (instance) instance.hide();
+    }
+    if (completeModalEl) {
+      new bootstrap.Modal(completeModalEl).show();
+    }
+  }
+
   function ensureAndSubmit(){
     if (!needsOverrun()){
       completeForm.submit();
@@ -1155,7 +1165,27 @@
     if (overrunModal) overrunModal.show();
   }
 
-  // Attach handlers
+  function openCompleteFlow(){
+    if (!needsOverrun()){
+      // No overrun, open signature modal directly
+      openSignatureModal();
+      return;
+    }
+    // if order already has overrun reason on server, open signature modal directly
+    if (hiddenOverrun && hiddenOverrun.value) {
+      openSignatureModal();
+      return;
+    }
+    // Order exceeds ETA: show reason modal first
+    if (overrunModal) overrunModal.show();
+  }
+
+  // Attach handlers to complete-order-trigger buttons (from document)
+  document.querySelectorAll('.complete-order-trigger').forEach(function(btn){
+    btn.addEventListener('click', openCompleteFlow);
+  });
+
+  // Attach handlers to buttons inside signature modal
   if (footerBtn) footerBtn.addEventListener('click', ensureAndSubmit);
   if (signAndCompleteBtn) signAndCompleteBtn.addEventListener('click', ensureAndSubmit);
 
