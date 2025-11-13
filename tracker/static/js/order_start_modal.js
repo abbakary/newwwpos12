@@ -311,9 +311,16 @@ class OrderStartModal {
       }
     })
     .catch(error => {
-      this.showError('extractedDataError', 'An error occurred: ' + error.message);
+      const errorMsg = 'An error occurred: ' + (error.message || 'Unknown error');
+      console.error('Error creating order:', error);
+      this.showError('extractedDataError', errorMsg);
       submitBtn.disabled = false;
       submitBtn.innerHTML = originalText;
+
+      // Show toast notification
+      if (typeof showToast === 'function') {
+        showToast('Failed to create order. Please try again.', 'error');
+      }
     });
   }
 
