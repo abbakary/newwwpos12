@@ -1,0 +1,901 @@
+{% extends 'tracker/base.html' %}
+{% load static %}
+
+{% block title %}Create Invoice{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="page-title">
+    <div class="row">
+      <div class="col-6"><h4>Create Invoice</h4></div>
+      <div class="col-6">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a href="{% url 'tracker:dashboard' %}">Dashboard</a></li>
+          {% if order %}
+            <li class="breadcrumb-item"><a href="{% url 'tracker:started_order_detail' order_id=order.id %}">Order #{{ order.order_number }}</a></li>
+          {% endif %}
+          <li class="breadcrumb-item active">Create Invoice</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container-fluid">
+  <div class="row">
+    <!-- Customer Information Panel -->
+    {% if customer %}
+    <div class="col-md-4">
+      <div class="card">
+        <div class="card-header bg-primary text-white">
+          <h6 class="mb-0"><i class="fa fa-user me-2"></i>Customer Information</h6>
+        </div>
+        <div class="card-body">
+          <div class="mb-3">
+            <strong>{{ customer.full_name }}</strong>
+            <br><small class="text-muted">{{ customer.code }}</small>
+          </div>
+          <div class="mb-2">
+            <label class="form-label mb-1"><small class="text-muted">Phone</small></label>
+            <p class="mb-0">{{ customer.phone }}</p>
+          </div>
+          {% if customer.email %}
+          <div class="mb-2">
+            <label class="form-label mb-1"><small class="text-muted">Email</small></label>
+            <p class="mb-0">{{ customer.email }}</p>
+          </div>
+          {% endif %}
+          {% if customer.organization_name %}
+          <div class="mb-2">
+            <label class="form-label mb-1"><small class="text-muted">Organization</small></label>
+            <p class="mb-0">{{ customer.organization_name }}</p>
+          </div>
+          {% endif %}
+          {% if vehicle %}
+          <div class="mt-3 pt-3 border-top">
+            <label class="form-label mb-1"><small class="text-muted">Vehicle</small></label>
+            <p class="mb-0">{{ vehicle.plate_number }}</p>
+            <small class="text-muted">{{ vehicle.make }} {{ vehicle.model }}</small>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Invoice Form -->
+    <div class="{% if customer %}col-md-8{% else %}col-md-12{% endif %}">
+      <div class="card">
+        <div class="card-header bg-light">
+          <h6 class="mb-0">Invoice Details</h6>
+        </div>
+        <div class="card-body">
+          <form method="post" novalidate>
+            {% csrf_token %}
+
+            <style>
+      .company-block { background: #ffd400; padding: 12px; border-radius: 6px; color: #222; margin-bottom: 18px; }
+      .invoice-preview-box { border: 1px solid #e6e6e6; padding: 12px; border-radius: 6px; background: #f8f9fb; }
+      .invoice-preview-row { display:flex; justify-content:space-between; padding:6px 0; font-size:14px }
+      .invoice-preview-row strong{ font-weight:700 }
+      .linked-order-badge { background: #28a745; color: white; padding: 6px 12px; border-radius: 4px; display: inline-block; margin-bottom: 12px; }
+      .started-orders-dropdown { display: none; margin-top: 12px; padding: 12px; background: #f0f7ff; border-left: 4px solid #0d6efd; border-radius: 4px; }
+      .started-orders-dropdown.active { display: block; }
+    </style>
+
+    <div class="company-block">
+      <strong>Superdoll Trailer Manufacture Co. (T) Ltd.</strong><br>
+      P.O. Box 16541 DSM, Tel. +255-22-2860930-2863467, Fax +255-22-2865412/3, Email: stm@superdoll-tz.com, Tax ID No.100-199-157, VAT Reg. No.10-0085-15-E
+    </div>
+
+    <!-- Invoice Input Mode Selector -->
+    <div class="card mb-3">
+      <div class="card-header bg-light">
+        <h6 class="mb-0">Invoice Input Method</h6>
+      </div>
+      <div class="card-body">
+        <div class="btn-group w-100" role="group">
+          <input type="radio" class="btn-check" name="invoice-input-mode" id="mode-manual" value="manual" checked>
+          <label class="btn btn-outline-primary" for="mode-manual">
+            <i class="fa fa-edit me-2"></i>Manual Entry
+          </label>
+
+          <input type="radio" class="btn-check" name="invoice-input-mode" id="mode-upload" value="upload">
+          <label class="btn btn-outline-primary" for="mode-upload">
+            <i class="fa fa-file-upload me-2"></i>Upload Invoice
+          </label>
+        </div>
+
+        <div id="uploadSection" class="mt-3 d-none">
+          <div class="mb-2">
+            <label class="form-label">Select invoice file (PDF or image)</label>
+            <input type="file" id="invoiceFileInput" class="form-control">
+          </div>
+          <div class="d-flex gap-2">
+            <button type="button" id="uploadExtractBtn" class="btn btn-primary">Upload & Extract</button>
+            <button type="button" id="uploadCancelBtn" class="btn btn-light">Cancel</button>
+            <div id="uploadProgress" class="progress ms-auto" style="width:200px; display:none"><div class="progress-bar" role="progressbar" style="width:0%"></div></div>
+          </div>
+          <div id="uploadError" class="text-danger mt-2" style="display:none"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Extraction Review Modal -->
+    <div class="modal fade" id="extractionReviewModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Extraction Preview</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div id="extractedHeader" class="mb-3"></div>
+            <div id="extractedRaw" class="mt-3 small text-muted"></div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" id="applyExtractionBtn" class="btn btn-outline-primary">Apply to Form</button>
+            <button type="button" id="createFromExtractionBtn" class="btn btn-primary">Create Invoice from Extraction</button>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- Linking status message (shown when order is selected) -->
+    {% if order %}
+    <div class="linked-order-badge" id="linkingStatus">
+      <i class="fa fa-link me-2"></i>Linking to started order #{{ order.order_number }}
+      {% if order.started_at %}
+      (Started: {{ order.started_at|date:"d/m/Y H:i" }})
+      {% endif %}
+    </div>
+    {% endif %}
+
+    <div class="card mb-3">
+      <div class="card-header bg-light">
+        <h6 class="mb-0">Find Started Order (Optional)</h6>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Vehicle Plate Number</label>
+            {{ form.plate_number }}
+            <small class="text-muted d-block">Enter the vehicle plate to find and link an existing started order. This is optional - you can create a new invoice if no order exists.</small>
+          </div>
+          <div class="col-md-6" id="ordersDropdownContainer" style="display:none;">
+            <label class="form-label">Available Started Orders</label>
+            <select name="selected_order_id_select" id="startedOrdersSelect" class="form-select">
+              <option value="">-- Create New Order --</option>
+            </select>
+            <small class="text-muted d-block">Select an order to link this invoice to it. The order's customer details will be loaded.</small>
+          </div>
+        </div>
+        {{ form.selected_order_id }}
+      </div>
+    </div>
+
+    <div class="card mb-3">
+      <div class="card-header bg-light">
+        <h6 class="mb-0">Customer Information</h6>
+      </div>
+      <div class="card-body">
+                <div class="row g-3">
+                  <div class="col-12">
+                    <label class="form-label">Existing Customer</label>
+                    {{ form.existing_customer }}
+                    {% if form.existing_customer.errors %}<div class="text-danger f-12">{{ form.existing_customer.errors|striptags }}</div>{% endif %}
+                    <small class="text-muted d-block">Select an existing customer to link, or fill the fields below to create a new customer.</small>
+                  </div>
+
+                  <div class="col-md-6">
+                    <label class="form-label">Customer Name</label>
+                    {{ form.customer_name }}
+                    {% if form.customer_name.errors %}<div class="text-danger f-12">{{ form.customer_name.errors|striptags }}</div>{% endif %}
+                  </div>
+
+                  <div class="col-md-6">
+                    <label class="form-label">Phone</label>
+                    {{ form.customer_phone }}
+                    {% if form.customer_phone.errors %}<div class="text-danger f-12">{{ form.customer_phone.errors|striptags }}</div>{% endif %}
+                  </div>
+
+                  <div class="col-md-6">
+                    <label class="form-label">Email</label>
+                    {{ form.customer_email }}
+                    {% if form.customer_email.errors %}<div class="text-danger f-12">{{ form.customer_email.errors|striptags }}</div>{% endif %}
+                  </div>
+
+                  <div class="col-md-6">
+                    <label class="form-label">WhatsApp</label>
+                    {{ form.customer_whatsapp }}
+                    {% if form.customer_whatsapp.errors %}<div class="text-danger f-12">{{ form.customer_whatsapp.errors|striptags }}</div>{% endif %}
+                  </div>
+
+                  <div class="col-12">
+                    <label class="form-label">Organization</label>
+                    {{ form.customer_organization_name }}
+                    {% if form.customer_organization_name.errors %}<div class="text-danger f-12">{{ form.customer_organization_name.errors|striptags }}</div>{% endif %}
+                  </div>
+
+                  <div class="col-md-6">
+                    <label class="form-label">Tax Number</label>
+                    {{ form.customer_tax_number }}
+                    {% if form.customer_tax_number.errors %}<div class="text-danger f-12">{{ form.customer_tax_number.errors|striptags }}</div>{% endif %}
+                  </div>
+
+                  <div class="col-md-6">
+                    <label class="form-label">Customer Type</label>
+                    {{ form.customer_type }}
+                    {% if form.customer_type.errors %}<div class="text-danger f-12">{{ form.customer_type.errors|striptags }}</div>{% endif %}
+                  </div>
+
+                  <div class="col-md-6" id="personalSubtypeWrapper" style="display:none;">
+                    <label class="form-label">Personal Subtype</label>
+                    {{ form.customer_personal_subtype }}
+                    {% if form.customer_personal_subtype.errors %}<div class="text-danger f-12">{{ form.customer_personal_subtype.errors|striptags }}</div>{% endif %}
+                  </div>
+
+                  <div class="col-12">
+                    <label class="form-label">Address</label>
+                    {{ form.customer_address }}
+                    {% if form.customer_address.errors %}<div class="text-danger f-12">{{ form.customer_address.errors|striptags }}</div>{% endif %}
+                  </div>
+
+                  <script>
+                    (function(){
+                      function updateSubtype(){
+                        var typeEl = document.querySelector('[name="customer_type"]');
+                        var wrapper = document.getElementById('personalSubtypeWrapper');
+                        if (!typeEl) return;
+                        var v = typeEl.value;
+                        if (v === 'personal') wrapper.style.display = 'block'; else wrapper.style.display = 'none';
+                      }
+                      document.addEventListener('DOMContentLoaded', function(){
+                        var typeEl = document.querySelector('[name="customer_type"]');
+                        if (typeEl){
+                          typeEl.addEventListener('change', updateSubtype);
+                          updateSubtype();
+                        }
+                      });
+                    })();
+                  </script>
+                </div>
+              </div>
+            </div>
+
+            <div class="card mb-3">
+              <div class="card-header bg-light">
+                <h6 class="mb-0">Invoice Information</h6>
+              </div>
+              <div class="card-body">
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <label class="form-label">{{ form.invoice_date.label|default:"Invoice Date" }}</label>
+                    {{ form.invoice_date }}
+                    {% if form.invoice_date.errors %}<div class="text-danger f-12">{{ form.invoice_date.errors|striptags }}</div>{% endif %}
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">{{ form.reference.label }}</label>
+                    {{ form.reference }}
+                    {% if form.reference.errors %}<div class="text-danger f-12">{{ form.reference.errors|striptags }}</div>{% endif %}
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">{{ form.due_date.label }}</label>
+                    {{ form.due_date }}
+                    {% if form.due_date.errors %}<div class="text-danger f-12">{{ form.due_date.errors|striptags }}</div>{% endif %}
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">{{ form.attended_by.label|default:'Attended By' }}</label>
+                    {{ form.attended_by }}
+                    {% if form.attended_by.errors %}<div class="text-danger f-12">{{ form.attended_by.errors|striptags }}</div>{% endif %}
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">{{ form.kind_attention.label|default:'Kind Attn' }}</label>
+                    {{ form.kind_attention }}
+                    {% if form.kind_attention.errors %}<div class="text-danger f-12">{{ form.kind_attention.errors|striptags }}</div>{% endif %}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label">{{ form.tax_rate.label }}</label>
+                <div class="input-group">
+                  {{ form.tax_rate }}
+                  <span class="input-group-text">%</span>
+                </div>
+                {% if form.tax_rate.errors %}<div class="text-danger f-12">{{ form.tax_rate.errors|striptags }}</div>{% endif %}
+                <small class="text-muted">Tax will be calculated automatically</small>
+              </div>
+            </div>
+
+            <div class="row g-3 mt-2">
+              <div class="col-12">
+                <label class="form-label">{{ form.notes.label }}</label>
+                {{ form.notes }}
+                {% if form.notes.errors %}<div class="text-danger f-12">{{ form.notes.errors|striptags }}</div>{% endif %}
+              </div>
+              <div class="col-12">
+                <label class="form-label">{{ form.terms.label }}</label>
+                {{ form.terms }}
+                {% if form.terms.errors %}<div class="text-danger f-12">{{ form.terms.errors|striptags }}</div>{% endif %}
+              </div>
+            </div>
+
+            <!-- Service selection for ETA tracking (affects order ETA only; not shown on printed invoice) -->
+            <div class="card mb-3">
+              <div class="card-header bg-light">
+                <h6 class="mb-0">Service Selection (optional)</h6>
+              </div>
+              <div class="card-body">
+                <p class="small text-muted">Select services or add-ons performed — this will calculate an estimated duration for tracking but will not appear on the generated invoice.</p>
+
+                <div class="row g-2 mb-2">
+                  <div class="col-md-4">
+                    <label class="form-label">Order Type</label>
+                    <select id="invoiceOrderType" class="form-select" name="order_type" {% if order %}disabled{% endif %}>
+                      <option value="service" {% if order and order.type == 'service' %}selected{% endif %}>Service</option>
+                      <option value="sales" {% if order and order.type == 'sales' %}selected{% endif %}>Sales</option>
+                    </select>
+                    {% if order %}<input type="hidden" name="order_type_fixed" value="{{ order.type }}">{% endif %}
+                  </div>
+                </div>
+
+                <div id="invoiceServiceContainer" class="row g-2">Loading services...</div>
+                <div id="invoiceSalesContainer" class="row g-2" style="display:none;">Loading items...</div>
+
+                <div class="small text-muted mt-2" id="invoiceEtaHint" style="display:none;"></div>
+                <input type="hidden" name="service_selection" id="serviceSelectionInput" value="">
+                <input type="hidden" name="estimated_duration" id="invoiceEstimatedDuration" value="{{ order.estimated_duration|default:'' }}">
+
+                <div class="mt-3">
+                  <div class="invoice-preview-box" id="invoiceTotalsPreview">
+                    <div class="invoice-preview-row"><span>Net Value (TSH):</span><span id="previewNet">0.00 TSH</span></div>
+                    <div class="invoice-preview-row"><span>VAT (<span id="previewTaxRate">0</span>%):</span><span id="previewVAT">0.00 TSH</span></div>
+                    <div class="invoice-preview-row" style="font-weight:800; border-top:1px solid #e6e6e6; padding-top:8px"><span>Gross Value (TSH):</span><span id="previewGross">0.00 TSH</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="d-flex gap-2 mt-2">
+              {% if order %}
+                <a href="{% url 'tracker:started_order_detail' order_id=order.id %}" class="btn btn-light">Cancel</a>
+              {% else %}
+                <a href="{% url 'tracker:invoice_list' %}" class="btn btn-light">Cancel</a>
+              {% endif %}
+              <button type="submit" class="btn btn-primary">Create Invoice</button>
+            </div>
+
+            <script>
+              // Populate service selection and compute ETA based on order type
+              document.addEventListener('DOMContentLoaded', function(){
+                const svcContainer = document.getElementById('invoiceServiceContainer');
+                const salesContainer = document.getElementById('invoiceSalesContainer');
+                const hint = document.getElementById('invoiceEtaHint');
+                const hiddenSel = document.getElementById('serviceSelectionInput');
+                const hiddenEta = document.getElementById('invoiceEstimatedDuration');
+                const orderTypeSelect = document.getElementById('invoiceOrderType');
+                const initialOrderType = {% if order %}'{{ order.type }}'{% else %}null{% endif %};
+
+                function renderServices(data){
+                  const serviceTypes = Array.isArray(data.service_types)?data.service_types:[];
+                  const addOns = Array.isArray(data.service_addons)?data.service_addons:[];
+                  svcContainer.innerHTML = '';
+
+                  // Render service type checkboxes (for service orders)
+                  serviceTypes.forEach(s => {
+                    const id = 'inv_srv_' + (s.name||'').replace(/[^A-Za-z0-9_]/g,'_');
+                    const col = document.createElement('div'); col.className = 'col-md-6 col-lg-4';
+                    col.innerHTML = `<div class="service-checkbox-card"><input class="form-check-input inv-svc-opt" type="checkbox" id="${id}" value="${s.name}" data-minutes="${s.estimated_minutes||0}"><label class="service-checkbox-label" for="${id}"><div class="service-checkbox-content"><div class="service-checkbox-name">${s.name}</div><div class="service-checkbox-duration"><i class="fa fa-clock-o me-1"></i>${s.estimated_minutes||0} mins</div></div></label></div>`;
+                    svcContainer.appendChild(col);
+                  });
+
+                  if (addOns.length){
+                    const hr = document.createElement('div'); hr.className='col-12 mt-2'; hr.innerHTML='<hr>'; svcContainer.appendChild(hr);
+                    addOns.forEach(a => {
+                      const id = 'inv_add_' + (a.name||'').replace(/[^A-Za-z0-9_]/g,'_');
+                      const col = document.createElement('div'); col.className = 'col-md-6 col-lg-4';
+                      col.innerHTML = `<div class="addon-checkbox-card"><input class="form-check-input inv-svc-opt" type="checkbox" id="${id}" value="${a.name}" data-minutes="${a.estimated_minutes||0}"><label class="addon-checkbox-label" for="${id}"><div class="addon-checkbox-content"><div class="addon-checkbox-name">${a.name}</div><div class="addon-checkbox-duration"><i class="fa fa-clock-o me-1"></i>${a.estimated_minutes||0} mins</div></div></label></div>`;
+                      svcContainer.appendChild(col);
+                    });
+                  }
+
+                  // Attach listeners
+                  svcContainer.querySelectorAll('.inv-svc-opt').forEach(cb=>cb.addEventListener('change', updateSel));
+                }
+
+                function renderSales(data){
+                  const items = Array.isArray(data.inventory_items)?data.inventory_items:[];
+                  const addOns = Array.isArray(data.service_addons)?data.service_addons:[];
+                  salesContainer.innerHTML = '';
+
+                  // Inventory items as selectable entries for sales orders
+                  items.forEach(it => {
+                    const id = 'inv_item_' + (it.id||'');
+                    const col = document.createElement('div'); col.className='col-md-6 col-lg-4';
+                    const price = typeof it.price !== 'undefined' ? Number(it.price) : 0;
+                    col.innerHTML = `<div class="addon-checkbox-card"><input class="form-check-input inv-svc-opt-sales" type="checkbox" id="${id}" value="${it.id}" data-name="${(it.name||'').replace(/"/g,'\\"')}" data-price="${price}"><label class="addon-checkbox-label" for="${id}"><div class="addon-checkbox-content"><div class="addon-checkbox-name">${it.brand} - ${it.name}</div><div class="addon-checkbox-duration"><i class="fa fa-info-circle me-1"></i>Stock: ${it.quantity||0} | ${price.toFixed(2)} TSH</div></div></label></div>`;
+                    salesContainer.appendChild(col);
+                  });
+
+                  if (addOns.length){
+                    const hr = document.createElement('div'); hr.className='col-12 mt-2'; hr.innerHTML='<hr>'; salesContainer.appendChild(hr);
+                    addOns.forEach(a => {
+                      const id = 'inv_add_s_' + (a.name||'').replace(/[^A-Za-z0-9_]/g,'_');
+                      const col = document.createElement('div'); col.className = 'col-md-6 col-lg-4';
+                      col.innerHTML = `<div class="addon-checkbox-card"><input class="form-check-input inv-svc-opt-sales" type="checkbox" id="${id}" value="${a.name}" data-minutes="${a.estimated_minutes||0}" data-price="0"><label class="addon-checkbox-label" for="${id}"><div class="addon-checkbox-content"><div class="addon-checkbox-name">${a.name}</div><div class="addon-checkbox-duration"><i class="fa fa-clock-o me-1"></i>${a.estimated_minutes||0} mins</div></div></label></div>`;
+                      salesContainer.appendChild(col);
+                    });
+                  }
+
+                  salesContainer.querySelectorAll('.inv-svc-opt-sales').forEach(cb=>cb.addEventListener('change', updateSelSales));
+
+                  function updateSelSales(){
+                    const checked = Array.from(salesContainer.querySelectorAll('.inv-svc-opt-sales:checked'));
+                    // For sales we encode selection as array of item names/ids
+                    const names = checked.map(c=>{ const n = c.getAttribute('data-name'); return n?`${n}`:c.value; });
+                    // compute minutes from addons if present
+                    const total = checked.reduce((s,c)=>s+Number(c.getAttribute('data-minutes')||0),0);
+                    hiddenSel.value = JSON.stringify(names);
+                    hiddenEta.value = total>0?String(total):'';
+                    if (total>0){ hint.style.display='block'; hint.textContent = 'Estimated total time: ' + total + ' mins'; } else { hint.style.display='none'; }
+
+                    // Compute pricing preview (assume qty=1 per selected)
+                    const net = checked.reduce((s,c)=>s + Number(c.getAttribute('data-price')||0), 0);
+                    const taxRate = Number(document.querySelector('[name="tax_rate"]').value || 0);
+                    const vat = net * (taxRate/100);
+                    const gross = net + vat;
+                    document.getElementById('previewNet').textContent = net.toFixed(2) + ' TSH';
+                    document.getElementById('previewTaxRate').textContent = taxRate.toFixed(2);
+                    document.getElementById('previewVAT').textContent = vat.toFixed(2) + ' TSH';
+                    document.getElementById('previewGross').textContent = gross.toFixed(2) + ' TSH';
+                  }
+                }
+
+                function updateSel(){
+                  const checked = Array.from(svcContainer.querySelectorAll('.inv-svc-opt:checked'));
+                  const names = checked.map(c=>c.value);
+                  const total = checked.reduce((s,c)=>s+Number(c.getAttribute('data-minutes')||0),0);
+                  hiddenSel.value = JSON.stringify(names);
+                  hiddenEta.value = total>0?String(total):'';
+                  if (total>0){ hint.style.display='block'; hint.textContent = 'Estimated total time: ' + total + ' mins'; } else { hint.style.display='none'; }
+                }
+
+                function updateSelSales(){
+                  const checked = Array.from(salesContainer.querySelectorAll('.inv-svc-opt-sales:checked'));
+                  // For sales we encode selection as array of item names/ids
+                  const names = checked.map(c=>{ const n = c.getAttribute('data-name'); return n?`${n}`:c.value; });
+                  // compute minutes from addons if present
+                  const total = checked.reduce((s,c)=>s+Number(c.getAttribute('data-minutes')||0),0);
+                  hiddenSel.value = JSON.stringify(names);
+                  hiddenEta.value = total>0?String(total):'';
+                  if (total>0){ hint.style.display='block'; hint.textContent = 'Estimated total time: ' + total + ' mins'; } else { hint.style.display='none'; }
+                }
+
+                // Fetch data and initialize
+                fetch('{% url "tracker:api_service_types" %}', { headers: { 'X-Requested-With': 'XMLHttpRequest' }})
+                  .then(r=>r.json()).then(data=>{
+                    renderServices(data);
+                    renderSales(data);
+
+                    // Initial display based on order or default select
+                    const defaultType = initialOrderType || (orderTypeSelect?orderTypeSelect.value:'service');
+                    setTimeout(()=>{
+                      if (defaultType === 'sales'){
+                        svcContainer.style.display='none'; salesContainer.style.display='flex';
+                        if (orderTypeSelect) orderTypeSelect.value='sales';
+                      } else {
+                        svcContainer.style.display='flex'; salesContainer.style.display='none';
+                        if (orderTypeSelect) orderTypeSelect.value='service';
+                      }
+                    }, 10);
+
+                    if (orderTypeSelect){
+                      orderTypeSelect.addEventListener('change', function(){
+                        if (this.value === 'sales'){ svcContainer.style.display='none'; salesContainer.style.display='flex'; }
+                        else { svcContainer.style.display='flex'; salesContainer.style.display='none'; }
+                        // clear selections and update hidden
+                        hiddenSel.value = '';
+                        hiddenEta.value = '';
+                        hint.style.display='none';
+                      });
+                    }
+
+                    // If page loaded with an order, lock reference field to the order plate
+                    try{
+                      var hasOrder = {% if order %}true{% else %}false{% endif %};
+                      if (hasOrder){
+                        var refEl = document.querySelector('[name="reference"]');
+                        if (refEl){
+                          refEl.value = '{% if vehicle and vehicle.plate_number %}{{ vehicle.plate_number }}{% elif order %}{{ order.order_number }}{% endif %}';
+                          refEl.readOnly = true;
+                        }
+                      }
+                    }catch(e){/* ignore */}
+                  })
+                  .catch(err=>{ console.error('Failed to load services/items for invoice:', err); svcContainer.innerHTML='<div class="text-danger">Failed to load services</div>'; salesContainer.innerHTML=''; });
+
+              });
+
+              // Plate search and started orders lookup
+              const plateSearchInput = document.querySelector('[name="plate_number"]');
+              const ordersDropdownContainer = document.getElementById('ordersDropdownContainer');
+              const startedOrdersSelect = document.getElementById('startedOrdersSelect');
+              const selectedOrderIdField = document.querySelector('[name="selected_order_id"]');
+              const selectedOrderIdSelectField = document.querySelector('[name="selected_order_id_select"]');
+
+              if (plateSearchInput) {
+                plateSearchInput.addEventListener('input', function() {
+                  const plate = this.value.trim().toUpperCase();
+
+                  if (plate.length > 2) {
+                    // Fetch started orders for this plate
+                    fetch('{% url "tracker:api_search_started_orders" %}?plate=' + encodeURIComponent(plate), {
+                      headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                    })
+                    .then(r => r.json())
+                    .then(data => {
+                      if (data.success && data.orders && data.orders.length > 0) {
+                        // Populate dropdown
+                        startedOrdersSelect.innerHTML = '<option value="">-- Create New Order --</option>';
+                        data.orders.forEach(order => {
+                          const started = new Date(order.started_at);
+                          const startedStr = started.toLocaleString('en-US', {year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit'});
+                          const option = document.createElement('option');
+                          option.value = order.id;
+                          option.textContent = `#${order.order_number} - ${order.customer ? order.customer.name : 'Unknown'} (Started: ${startedStr})`;
+                          startedOrdersSelect.appendChild(option);
+                        });
+
+                        // Show dropdown
+                        ordersDropdownContainer.classList.add('active');
+                        ordersDropdownContainer.style.display = 'block';
+                      } else {
+                        // No orders found
+                        startedOrdersSelect.innerHTML = '<option value="">-- No existing orders found, will create new --</option>';
+                        ordersDropdownContainer.classList.add('active');
+                        ordersDropdownContainer.style.display = 'block';
+                      }
+                    })
+                    .catch(err => {
+                      console.error('Failed to search started orders:', err);
+                      ordersDropdownContainer.style.display = 'none';
+                    });
+                  } else {
+                    // Hide dropdown if plate too short
+                    ordersDropdownContainer.style.display = 'none';
+                    ordersDropdownContainer.classList.remove('active');
+                  }
+                });
+              }
+
+              // On order selection, populate the hidden selected_order_id field
+              if (selectedOrderIdSelectField) {
+                selectedOrderIdSelectField.addEventListener('change', function() {
+                  if (selectedOrderIdField) {
+                    selectedOrderIdField.value = this.value || '';
+                  }
+                });
+              }
+              // Upload vs Manual toggle
+              (function(){
+                const modeManual = document.getElementById('mode-manual');
+                const modeUpload = document.getElementById('mode-upload');
+                const uploadSection = document.getElementById('uploadSection');
+                function updateMode(){
+                  if (modeUpload && modeUpload.checked){ uploadSection.classList.remove('d-none'); }
+                  else { uploadSection.classList.add('d-none'); }
+                }
+                if (modeManual && modeUpload){
+                  modeManual.addEventListener('change', updateMode);
+                  modeUpload.addEventListener('change', updateMode);
+                  updateMode();
+                }
+              })();
+
+              // Upload processing
+              (function(){
+                const fileInput = document.getElementById('invoiceFileInput');
+                const uploadBtn = document.getElementById('uploadExtractBtn');
+                const cancelBtn = document.getElementById('uploadCancelBtn');
+                const progressWrap = document.getElementById('uploadProgress');
+                const progressBar = progressWrap ? progressWrap.querySelector('.progress-bar') : null;
+                const errorBox = document.getElementById('uploadError');
+                const reviewModalEl = document.getElementById('extractionReviewModal');
+                const reviewModal = reviewModalEl && typeof bootstrap !== 'undefined' ? new bootstrap.Modal(reviewModalEl) : null;
+                const extractedHeader = document.getElementById('extractedHeader');
+                const extractedRaw = document.getElementById('extractedRaw');
+                const applyBtn = document.getElementById('applyExtractionBtn');
+                const createBtn = document.getElementById('createFromExtractionBtn');
+
+                if (!uploadBtn || !fileInput || !errorBox) {
+                  console.warn('Invoice upload elements not found. Upload functionality disabled.');
+                  return;
+                }
+
+                function getCSRF(){
+                  const name = 'csrftoken=';
+                  const parts = document.cookie.split(';');
+                  for (let i=0;i<parts.length;i++){ const c = parts[i].trim(); if (c.indexOf(name)===0) return c.substring(name.length); }
+                  const el = document.querySelector('input[name="csrfmiddlewaretoken"]');
+                  return el ? el.value : '';
+                }
+
+                function setProgress(p){ if(progressBar){ progressBar.style.width = Math.max(0, Math.min(100, p)) + '%'; } if(progressWrap){ progressWrap.style.display = p>0 && p<100 ? 'block' : (p>=100? 'block':'none'); } }
+
+                if (cancelBtn){ cancelBtn.addEventListener('click', function(){ if (fileInput) fileInput.value=''; document.getElementById('mode-manual').checked=true; document.getElementById('mode-upload').checked=false; document.getElementById('uploadSection').classList.add('d-none'); }); }
+
+                if (uploadBtn){
+                  uploadBtn.addEventListener('click', async function(){
+                    if (!fileInput || !fileInput.files || !fileInput.files[0]){
+                      errorBox.style.display='block';
+                      errorBox.innerHTML='<i class="fa fa-warning me-2"></i>Please select a file to upload.';
+                      errorBox.className = 'alert alert-warning mt-2';
+                      return;
+                    }
+
+                    const file = fileInput.files[0];
+                    if (file.size > 50 * 1024 * 1024) {
+                      errorBox.style.display='block';
+                      errorBox.innerHTML='<i class="fa fa-warning me-2"></i>File is too large. Maximum size is 50MB.';
+                      errorBox.className = 'alert alert-warning mt-2';
+                      return;
+                    }
+
+                    errorBox.style.display='none';
+                    const fd = new FormData();
+                    fd.append('file', file);
+                    const plateEl = document.querySelector('[name="plate_number"]');
+                    const plate = plateEl ? plateEl.value.trim().toUpperCase() : '';
+                    if (plate) fd.append('plate', plate);
+                    const selOrder = document.querySelector('[name="selected_order_id_select"]');
+                    if (selOrder && selOrder.value) fd.append('selected_order_id', selOrder.value);
+
+                    setProgress(5);
+                    uploadBtn.disabled = true;
+                    const originalBtnText = uploadBtn.innerHTML;
+                    uploadBtn.innerHTML = '<i class="fa fa-spinner fa-spin me-2"></i>Extracting...';
+
+                    try {
+                      const r = await fetch('{% url "tracker:api_upload_extract_invoice" %}', {
+                        method: 'POST',
+                        body: fd,
+                        headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRFToken': getCSRF() }
+                      });
+
+                      setProgress(100);
+
+                      if (!r.ok) {
+                        throw new Error(`Server error: ${r.status} ${r.statusText}`);
+                      }
+
+                      let data;
+                      try {
+                        data = await r.json();
+                      } catch(jsonErr) {
+                        throw new Error('Invalid response format from server');
+                      }
+
+                      if (!data) {
+                        throw new Error('Empty response from server');
+                      }
+
+                      if (data.success === true){
+                        errorBox.style.display='block';
+                        errorBox.innerHTML='<i class="fa fa-check-circle text-success me-2"></i>Invoice created successfully! Redirecting...';
+                        errorBox.className = 'alert alert-success mt-2';
+                        setTimeout(function(){
+                          window.location.href = data.redirect_url || ('/tracker/invoices/' + data.invoice_id + '/');
+                        }, 500);
+                        return;
+                      }
+
+                      if (data.data && data.data.header){
+                        const d = data.data;
+                        const hdr = d.header || {};
+                        const invoiceNo = hdr.invoice_no || hdr.code_no || 'N/A';
+                        const date = hdr.date || 'N/A';
+                        const customer = hdr.customer_name || 'N/A';
+                        const phone = hdr.phone || '';
+                        const email = hdr.email || '';
+                        const address = hdr.address || '';
+                        const subtotal = hdr.subtotal ? parseFloat(hdr.subtotal).toLocaleString('en-US', {minimumFractionDigits: 2}) : '0.00';
+                        const tax = hdr.tax ? parseFloat(hdr.tax).toLocaleString('en-US', {minimumFractionDigits: 2}) : '0.00';
+                        const total = hdr.total ? parseFloat(hdr.total).toLocaleString('en-US', {minimumFractionDigits: 2}) : '0.00';
+                        const reference = hdr.reference || '';
+                        const attendedBy = hdr.attended_by || '';
+                        const kindAttention = hdr.kind_attention || '';
+                        const paymentMethod = hdr.payment_method || '';
+                        const deliveryTerms = hdr.delivery_terms || '';
+
+                        let sellerInfo = '';
+                        if (hdr.seller_name) {
+                          sellerInfo += `<div class="mb-3"><strong>Seller / Supplier</strong></div>`;
+                          sellerInfo += `<div class="row mb-2"><div class="col-12"><strong>${hdr.seller_name}</strong></div></div>`;
+                          if (hdr.seller_address) sellerInfo += `<div class="row mb-2"><div class="col-12">${hdr.seller_address}</div></div>`;
+                          if (hdr.seller_phone) sellerInfo += `<div class="row mb-2"><div class="col-12"><strong>Phone:</strong> ${hdr.seller_phone}</div></div>`;
+                          if (hdr.seller_email) sellerInfo += `<div class="row mb-2"><div class="col-12"><strong>Email:</strong> ${hdr.seller_email}</div></div>`;
+                          if (hdr.seller_tax_id) sellerInfo += `<div class="row mb-2"><div class="col-12"><strong>Tax ID:</strong> ${hdr.seller_tax_id}</div></div>`;
+                          if (hdr.seller_vat_reg) sellerInfo += `<div class="row mb-2"><div class="col-12"><strong>VAT Reg:</strong> ${hdr.seller_vat_reg}</div></div>`;
+                          sellerInfo += '<hr/>';
+                        }
+
+                        let headerHtml = sellerInfo + `<div class=\"mb-3\"><strong>Invoice Summary</strong></div>
+                          <div class=\"invoice-preview-box mb-3\">
+                            <div class=\"invoice-preview-row\"><span>Net Value (TSH):</span><span>${subtotal} TSH</span></div>
+                            <div class=\"invoice-preview-row\"><span>VAT${hdr.tax_rate ? ' (' + (typeof hdr.tax_rate === 'string' ? hdr.tax_rate : hdr.tax_rate.toFixed(2)) + '%)' : ''}:</span><span>${tax} TSH</span></div>
+                            <div class=\"invoice-preview-row\" style=\"font-weight:800; border-top:1px solid #e6e6e6; padding-top:8px\"><span>Gross Value (TSH):</span><span>${total} TSH</span></div>
+                          </div>
+                          <div class=\"mb-3\"><strong>Invoice Information</strong></div>
+                          <div class=\"row mb-2\">
+                            <div class=\"col-md-6\"><strong>Invoice No:</strong> ${invoiceNo}</div>
+                            <div class=\"col-md-6\"><strong>Date:</strong> ${date}</div>
+                          </div>
+                          <div class=\"row mb-2\">
+                            <div class=\"col-md-6\"><strong>Reference:</strong> ${reference || 'N/A'}</div>
+                            <div class=\"col-md-6\"><strong>Payment Method:</strong> ${paymentMethod || 'N/A'}</div>
+                          </div>
+                          <div class=\"row mb-3\">
+                            <div class=\"col-12\"><strong>Delivery Terms:</strong> ${deliveryTerms || 'N/A'}</div>
+                          </div>
+                          <div class=\"mb-3\"><strong>Customer Information</strong></div>
+                          <div class=\"row mb-2\">
+                            <div class=\"col-12\"><strong>Name:</strong> ${customer}</div>
+                          </div>
+                          ${phone ? '<div class=\"row mb-2\"><div class=\"col-12\"><strong>Phone:</strong> ' + phone + '</div></div>' : ''}
+                          ${email ? '<div class=\"row mb-2\"><div class=\"col-12\"><strong>Email:</strong> ' + email + '</div></div>' : ''}
+                          ${address ? '<div class=\"row mb-3\"><div class=\"col-12\"><strong>Address:</strong> ' + address + '</div></div>' : ''}
+                          ${attendedBy ? '<div class=\"row mb-2\"><div class=\"col-12\"><strong>Attended By:</strong> ' + attendedBy + '</div></div>' : ''}
+                          ${kindAttention ? '<div class=\"row mb-3\"><div class=\"col-12\"><strong>Kind Attention:</strong> ' + kindAttention + '</div></div>' : ''}`;
+
+                        if (extractedHeader) extractedHeader.innerHTML = headerHtml;
+                        if (extractedRaw) extractedRaw.textContent = d.raw_text ? d.raw_text.substring(0,2000) : '';
+                        window.__lastInvoiceExtraction = d;
+                        if (reviewModal) {
+                          reviewModal.show();
+                        } else {
+                          errorBox.style.display='block';
+                          errorBox.innerHTML = '<i class="fa fa-info-circle me-2"></i>Extraction complete. Please review the data in the form below.';
+                          errorBox.className = 'alert alert-info mt-2';
+                        }
+                      } else {
+                        errorBox.style.display='block';
+                        const msgText = data.message || 'Could not extract invoice data. Please check the file format and try again.';
+                        errorBox.innerHTML = '<i class="fa fa-exclamation-circle me-2"></i>' + msgText;
+                        errorBox.className = 'alert alert-warning mt-2';
+                      }
+                    } catch(err){
+                      setProgress(0);
+                      errorBox.style.display='block';
+                      const errMsg = (err && err.message) ? err.message : String(err);
+                      errorBox.innerHTML = '<i class="fa fa-exclamation-triangle me-2"></i>Upload error: ' + errMsg;
+                      errorBox.className = 'alert alert-danger mt-2';
+                      console.error('Upload extraction error:', err);
+                    } finally {
+                      uploadBtn.disabled = false;
+                      uploadBtn.innerHTML = originalBtnText;
+                      setProgress(0);
+                    }
+                  });
+                }
+
+                if (applyBtn){
+                  applyBtn.addEventListener('click', function(){
+                    const d = window.__lastInvoiceExtraction || {};
+                    if (!d || !d.header) return;
+                    const hdr = d.header;
+                    const f = document.querySelector('form');
+                    if (!f) return;
+
+                    const map = {
+                      'customer_name': hdr.customer_name || '',
+                      'customer_phone': hdr.phone || '',
+                      'customer_email': hdr.email || '',
+                      'customer_address': hdr.address || '',
+                      'reference': hdr.reference || hdr.invoice_no || hdr.code_no || '',
+                      'attended_by': hdr.attended_by || '',
+                      'kind_attention': hdr.kind_attention || '',
+                      'notes': (hdr.notes || hdr.remarks || ''),
+                      'terms': hdr.delivery_terms || ''
+                    };
+
+                    Object.keys(map).forEach(k=>{
+                      const el = f.querySelector('[name="'+k+'"]');
+                      if (el && map[k]) {
+                        el.value = map[k];
+                        el.dispatchEvent(new Event('input', {bubbles: true}));
+                        el.dispatchEvent(new Event('change', {bubbles: true}));
+                      }
+                    });
+
+                    // Inject seller fields as hidden inputs so they are submitted with the form
+                    const sellerKeys = ['seller_name','seller_address','seller_phone','seller_email','seller_tax_id','seller_vat_reg'];
+                    sellerKeys.forEach(sk=>{
+                      const val = hdr[sk] || '';
+                      if (!val) return;
+                      let inp = f.querySelector('[name="'+sk+'"]');
+                      if (!inp) {
+                        inp = document.createElement('input');
+                        inp.type = 'hidden';
+                        inp.name = sk;
+                        f.appendChild(inp);
+                      }
+                      inp.value = val;
+                    });
+
+                    if (hdr.date) {
+                      const dateEl = f.querySelector('[name="invoice_date"]');
+                      if (dateEl) {
+                        let formattedDate = hdr.date;
+                        const dateMatch = String(hdr.date).match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+                        if (dateMatch) {
+                          formattedDate = dateMatch[3] + '-' + String(dateMatch[2]).padStart(2,'0') + '-' + String(dateMatch[1]).padStart(2,'0');
+                        }
+                        dateEl.value = formattedDate;
+                        dateEl.dispatchEvent(new Event('input', {bubbles: true}));
+                        dateEl.dispatchEvent(new Event('change', {bubbles: true}));
+                      }
+                    }
+
+                    if (hdr.tax_rate) {
+                      const taxEl = f.querySelector('[name="tax_rate"]');
+                      if (taxEl) {
+                        let taxRate = String(hdr.tax_rate).replace(/[^\d.]/g, '');
+                        if (taxRate) {
+                          taxEl.value = taxRate;
+                          taxEl.dispatchEvent(new Event('input', {bubbles: true}));
+                          taxEl.dispatchEvent(new Event('change', {bubbles: true}));
+                        }
+                      }
+                    }
+
+                    if (reviewModal) reviewModal.hide();
+                    const modeManual = document.getElementById('mode-manual');
+                    const modeUpload = document.getElementById('mode-upload');
+                    const uploadSection = document.getElementById('uploadSection');
+                    if (modeManual) modeManual.checked = true;
+                    if (modeUpload) modeUpload.checked = false;
+                    if (uploadSection) uploadSection.classList.add('d-none');
+
+                    setTimeout(function(){
+                      window.scrollTo({top: 0, behavior: 'smooth'});
+                    }, 100);
+                  });
+                }
+
+                if (createBtn){
+                  createBtn.addEventListener('click', function(){
+                    const d = window.__lastInvoiceExtraction || {};
+                    if (!d || !d.header) {
+                      alert('No extraction data available. Please try uploading again.');
+                      return;
+                    }
+                    if (reviewModal) reviewModal.hide();
+                    if (applyBtn) applyBtn.click();
+                  });
+                }
+
+              })();
+
+            </script>
+          </form>
+        </div>
+      </div>
+
+      <!-- Information Box -->
+      <div class="card mt-3">
+        <div class="card-body">
+          <div class="alert alert-info mb-0">
+            <i class="fa fa-info-circle me-2"></i>
+            <strong>Next Step:</strong> After creating the invoice, you'll be able to add line items, set payment details, and generate PDF/print the invoice.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

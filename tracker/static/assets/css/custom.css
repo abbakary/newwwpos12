@@ -1,0 +1,398 @@
+.page-wrapper .page-body-wrapper .sidebar-wrapper,
+.sidebar-wrapper {
+  background: #0f3a6d !important; /* lighter dark blue */
+  transition: all 0.3s ease;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
+}
+
+.sidebar-wrapper .sidebar-main .sidebar-links {
+  padding: 10px 0;
+  background: #0f3a6d !important;
+}
+
+.sidebar-wrapper .sidebar-main .sidebar-list {
+  position: relative;
+  padding: 0 15px;
+  margin: 5px 0;
+}
+
+.sidebar-wrapper .sidebar-main .sidebar-link {
+  color: #e0e9ff !important;
+  display: flex;
+  align-items: center;
+  padding: 10px 15px;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+  text-decoration: none;
+}
+
+.sidebar-wrapper .sidebar-main .sidebar-link:hover,
+.sidebar-wrapper .sidebar-main .sidebar-link.active,
+.sidebar-wrapper .sidebar-main .sidebar-links > li > a.sidebar-title:hover,
+.sidebar-wrapper .sidebar-main .sidebar-links > li.active > a.sidebar-title {
+  background: rgba(30, 90, 168, 0.15) !important; /* hover using lighter blue */
+  color: #8ec0ff !important;
+}
+
+.sidebar-wrapper .sidebar-main .sidebar-link i {
+  margin-right: 10px;
+  font-size: 16px;
+}
+
+.sidebar-wrapper .sidebar-main .sidebar-title {
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  color: #e0e9ff !important;
+  border-bottom: 1px solid #1e5aa8 !important; /* lighter border */
+  padding: 12px 20px !important;
+}
+
+.sidebar-wrapper .sidebar-main .sidebar-submenu {
+  padding-left: 20px;
+  margin-top: 5px;
+  display: none;
+  background: #154a8a !important; /* submenu background lighter */
+  border-left: 4px solid #1e5aa8 !important;
+}
+
+.sidebar-wrapper .sidebar-main .sidebar-list.active > .sidebar-submenu {
+  display: block;
+}
+
+.sidebar-wrapper .sidebar-main .sidebar-submenu .sidebar-link {
+  padding: 8px 25px !important;
+  font-size: 13px;
+  color: #c2d6f0 !important;
+}
+
+/* Active state for parent items with active children */
+.sidebar-wrapper .sidebar-main .sidebar-list.active > .sidebar-link {
+  background: rgba(30, 90, 168, 0.2) !important;
+  color: #ffffff !important;
+  font-weight: 500;
+}
+
+/* Logo and toggle */
+.logo-wrapper {
+  padding: 15px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #0f3a6d !important;
+  border-bottom: 1px solid #1e5aa8 !important;
+}
+
+/* Compact logo row */
+.logo-icon-wrapper {
+  background: #0f3a6d !important;
+  border-bottom: 1px solid #1e5aa8 !important;
+}
+
+.logo-wrapper img {
+  max-height: 40px;
+}
+
+.toggle-sidebar {
+  color: #e0e9ff !important;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.toggle-sidebar:hover {
+  color: #ffffff !important;
+}
+
+/* Sidebar navigation arrows */
+.sidebar-main .left-arrow,
+.sidebar-main .right-arrow {
+  background: #154a8a !important;
+  color: #e0e9ff !important;
+  border: 1px solid #1e5aa8 !important;
+}
+
+/* Pinned title */
+.pin-title {
+  color: #7abaff !important;
+  text-transform: uppercase;
+  font-size: 12px !important;
+  letter-spacing: 1px;
+  padding: 15px 20px 5px !important;
+  opacity: 0.8;
+}
+
+/* Active menu indicator */
+.sidebar-wrapper .sidebar-main .sidebar-links > li.active > a:before {
+  background-color: #66a3ff !important;
+}
+
+/* Customer registration: Service selection card state */
+input[type="checkbox"].visually-hidden:checked + label.service-offer {
+  border-color: #0d6efd !important;
+  background-color: #f8f9fa !important;
+  box-shadow: 0 0 0 2px rgba(13,110,253,.15);
+}
+
+/* Progress Bar Styles */
+.dashboard-progress {
+    height: 8px;
+    margin-bottom: 1rem;
+    background-color: #e9ecef;
+    border-radius: 4px;
+    overflow: hidden;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.dashboard-progress .progress-bar {
+    transition: width 0.6s ease, background-color 0.3s ease;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    white-space: nowrap;
+    color: white;
+    text-align: right;
+    font-size: 0;
+    position: relative;
+    overflow: visible;
+}
+
+/* Progress bar colors */
+.progress-bar.completed {
+    background-color: #00AC46;
+    background-image: linear-gradient(45deg, rgba(255, 255, 255, 0.15) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0.15) 75%, transparent 75%, transparent);
+    background-size: 1rem 1rem;
+    animation: progress-bar-stripes 1s linear infinite;
+}
+
+.progress-bar.in-progress {
+    background-color: #FFAE1A;
+    background-image: linear-gradient(45deg, rgba(0, 0, 0, 0.1) 25%, transparent 25%, transparent 50%, rgba(0, 0, 0, 0.1) 50%, rgba(0, 0, 0, 0.1) 75%, transparent 75%, transparent);
+    background-size: 1rem 1rem;
+    animation: progress-bar-stripes 1s linear infinite;
+}
+
+.progress-bar.pending {
+    background-color: #5A77FF;
+    background-image: linear-gradient(45deg, rgba(255, 255, 255, 0.15) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0.15) 75%, transparent 75%, transparent);
+    background-size: 1rem 1rem;
+    animation: progress-bar-stripes 1s linear infinite;
+}
+
+@keyframes progress-bar-stripes {
+    0% { background-position: 1rem 0; }
+    100% { background-position: 0 0; }
+}
+
+/* Add glowing effect on hover */
+.progress-bar.completed:hover {
+    box-shadow: 0 0 8px rgba(0, 172, 70, 0.6);
+}
+
+.progress-bar.in-progress:hover {
+    box-shadow: 0 0 8px rgba(255, 174, 26, 0.6);
+}
+
+.progress-bar.pending:hover {
+    box-shadow: 0 0 8px rgba(90, 119, 255, 0.6);
+}
+
+/* Progress bar container */
+
+/* Connection overlay shown on first load to simulate unreachable notice */
+.connection-overlay {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(15, 58, 109, 0.95); /* keep dark blue feel */
+    color: #ffffff;
+    z-index: 99999;
+    transition: opacity 0.4s ease, visibility 0.4s ease;
+    opacity: 1;
+    visibility: visible;
+    padding: 1.5rem;
+    text-align: center;
+}
+
+.connection-overlay.hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.connection-overlay__box {
+    max-width: 720px;
+    width: 100%;
+    background: rgba(255,255,255,0.03);
+    border-radius: 10px;
+    padding: 28px 32px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    border: 1px solid rgba(255,255,255,0.06);
+}
+
+.connection-overlay__title {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.connection-overlay__message {
+    font-size: 15px;
+    color: #dfefff;
+    margin-bottom: 12px;
+}
+
+.connection-overlay__hint {
+    font-size: 13px;
+    color: #a9c7ff;
+}
+
+.connection-overlay__actions {
+    margin-top: 16px;
+}
+
+.connection-overlay__spinner {
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 3px solid rgba(255,255,255,0.12);
+    border-top-color: #66a3ff;
+    animation: overlay-spin 1s linear infinite;
+    vertical-align: middle;
+    margin-left: 8px;
+}
+
+@keyframes overlay-spin { to { transform: rotate(360deg); } }
+
+.progress-bar.completed:hover {
+    box-shadow: 0 0 8px rgba(0, 172, 70, 0.6);
+}
+
+.progress-bar.in-progress:hover {
+    box-shadow: 0 0 8px rgba(255, 174, 26, 0.6);
+}
+
+.progress-bar.pending:hover {
+    box-shadow: 0 0 8px rgba(90, 119, 255, 0.6);
+}
+
+/* Progress bar container */
+
+/* Start Order button styling for sidebar */
+.start-order-list .sidebar-link {
+    background: #ffffff !important;
+    color: #0f3a6d !important;
+    border-radius: 8px;
+    padding: 10px 15px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+    font-weight: 600;
+}
+.start-order-list .sidebar-link .badge.bg-light {
+    background: #f8f9fa !important;
+}
+.start-order-list .sidebar-link:hover {
+    background: #ffffff !important;
+    transform: translateY(-2px);
+}
+.progress-container {
+    margin-bottom: 1.5rem;
+}
+
+.progress-container .progress-label {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.25rem;
+    font-size: 0.875rem;
+    color: #495057;
+}
+
+.progress-container .progress-label span:last-child {
+    font-weight: 600;
+    color: #212529;
+}
+
+/* Custom styles for dashboard */
+
+/* Quick Actions Section */
+#quick-actions-section {
+    margin-bottom: 2.5rem;  /* Add space between quick actions and footer */
+}
+
+#quick-actions-section .card {
+    border: 1px solid #e2e5ef;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.05);
+}
+
+#quick-actions-section .card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #e2e5ef;
+    padding: 1rem 1.5rem;
+}
+
+#quick-actions-section .card-body {
+    padding: 1.5rem;
+}
+
+#quick-actions-section .btn {
+    transition: all 0.3s ease;
+    border-radius: 0.5rem;
+    padding: 1rem 0.5rem;
+    text-align: center;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+#quick-actions-section .btn i {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+
+#quick-actions-section .btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Responsive adjustments */
+@media (max-width: 767.98px) {
+    #quick-actions-section {
+        margin-bottom: 1.5rem;
+    }
+    
+    #quick-actions-section .card-body {
+        padding: 1rem;
+    }
+}
+
+/* Upload Invoice UI */
+.invoice-upload-area {
+  border: 2px dashed #0d6efd;
+  border-radius: 8px;
+  padding: 40px;
+  text-align: center;
+  cursor: pointer;
+  background-color: #f8f9ff;
+  transition: all 0.3s ease;
+}
+.invoice-upload-area.is-dragover {
+  background-color: #eef5ff;
+  box-shadow: 0 0 0 3px rgba(13,110,253,.15);
+}
+.invoice-upload-icon {
+  font-size: 48px;
+  color: #0d6efd;
+  margin-bottom: 15px;
+  display: block;
+}
+.invoice-upload-title {
+  color: #0d6efd;
+  margin-bottom: 10px;
+}
+.invoice-upload-progress { margin-top: 20px; }
+
+/* End Upload Invoice UI */
