@@ -1194,9 +1194,9 @@
       const v = (overrunTextarea.value||'').trim();
       overrunError.style.display = 'none';
       if (!v){ overrunError.textContent = 'Please provide a reason for the delay.'; overrunError.style.display = ''; return; }
-      // Set hidden input and submit the form
+      // Set hidden input
       if (hiddenOverrun) hiddenOverrun.value = v;
-      // Also try to persist via AJAX to API (best-effort)
+      // Persist via AJAX to API
       fetch('{% url "tracker:api_report_overrun" order_id=order.id %}', {
         method: 'POST',
         headers: {
@@ -1207,7 +1207,8 @@
         body: JSON.stringify({ reason: v })
       }).finally(() => {
         if (overrunModal) overrunModal.hide();
-        completeForm.submit();
+        // Open signature modal after reason is saved
+        openSignatureModal();
       });
     });
   }
