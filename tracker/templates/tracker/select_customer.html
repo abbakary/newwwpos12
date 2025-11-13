@@ -16,16 +16,19 @@
     </div>
   </div>
 
-  <div class="card">
+  <div class="card shadow-sm border-left border-4" style="border-left-color: #667eea;">
     <div class="card-body">
-      <h5 class="card-title mb-3">Select Customer for New Order</h5>
+      <h5 class="card-title mb-2">
+        <i class="fa fa-search me-2"></i>Find Customer to Create Order
+      </h5>
+      <p class="text-muted small mb-4">Search for an existing customer or view recent customers. Click "Start Order" to begin creating an order.</p>
       <div class="row">
-        <div class="col-md-8">
-          <div class="input-group mb-3">
+        <div class="col-md-10">
+          <div class="input-group input-group-lg mb-3">
             <span class="input-group-text">
               <i class="fa fa-search"></i>
             </span>
-            <input type="text" class="form-control" id="customerSearch" placeholder="Search for customer by name, phone, or email..." autocomplete="off">
+            <input type="text" class="form-control" id="customerSearch" placeholder="Search by name, phone, or email..." autocomplete="off">
           </div>
           <div id="searchResults" class="list-group" style="display: none; max-height: 400px; overflow-y: auto; margin-bottom: 20px;">
             <!-- Search results will be populated here -->
