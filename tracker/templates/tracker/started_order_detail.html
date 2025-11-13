@@ -825,9 +825,62 @@
               // Manual Entry Tab elements
               const manualForm = document.getElementById('manualInvoiceForm');
               const manualTab = document.getElementById('invoiceManualTab');
+              const manualCustomerPhone = document.getElementById('manualCustomerPhone');
+              const existingCustomerAlert = document.getElementById('existingCustomerAlert');
+              const existingCustomerName = document.getElementById('existingCustomerName');
 
               // Storage for extracted data
               let extractedInvoiceData = null;
+
+              // ===== Customer Existence Check =====
+              function checkExistingCustomer(phone){
+                if (!phone || phone.length < 5) {
+                  if (existingCustomerAlert) existingCustomerAlert.style.display = 'none';
+                  return;
+                }
+
+                fetch('/api/customers/check-exists/?phone=' + encodeURIComponent(phone), {
+                  headers: {'X-Requested-With': 'XMLHttpRequest'}
+                })
+                .then(r => r.json())
+                .then(data => {
+                  if (data.exists && data.customer) {
+                    if (existingCustomerAlert && existingCustomerName) {
+                      existingCustomerAlert.style.display = 'block';
+                      existingCustomerName.textContent = '<strong>' + escapeHtml(data.customer.full_name) + '</strong>';
+                    }
+                  } else {
+                    if (existingCustomerAlert) existingCustomerAlert.style.display = 'none';
+                  }
+                })
+                .catch(err => {
+                  console.debug('Error checking customer existence:', err);
+                });
+              }
+
+              function escapeHtml(text){
+                if(!text) return '';
+                const map = {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'};
+                return text.replace(/[&<>"']/g, function(m){ return map[m]; });
+              }
+
+              // Add change event listener to manual customer phone input
+              if (manualCustomerPhone) {
+                manualCustomerPhone.addEventListener('change', function(){
+                  checkExistingCustomer(this.value);
+                });
+              }
+
+              // Check when switching to manual tab
+              if (manualTab) {
+                manualTab.addEventListener('click', function(){
+                  setTimeout(() => {
+                    if (manualCustomerPhone) {
+                      checkExistingCustomer(manualCustomerPhone.value);
+                    }
+                  }, 100);
+                });
+              }
 
               // ===== Utility Functions =====
               function getCSRF(){
