@@ -2007,7 +2007,7 @@ document.addEventListener('DOMContentLoaded', function(){
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+          'X-CSRFToken': getCSRFToken() || '',
           'X-Requested-With': 'XMLHttpRequest'
         },
         body: JSON.stringify({ reason: reason })
