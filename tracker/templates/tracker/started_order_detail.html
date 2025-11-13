@@ -285,6 +285,66 @@
 
                   <!-- Manual Entry Tab -->
                   <div class="tab-pane fade" id="manualTabPane" role="tabpanel">
+                    <!-- Workflow Guide -->
+                    <div class="alert alert-primary alert-dismissible fade show mb-4" role="alert">
+                      <div class="d-flex align-items-start">
+                        <i class="fa fa-lightbulb me-3 mt-1" style="font-size: 20px;"></i>
+                        <div>
+                          <h6 class="mb-2"><strong>How to Use Manual Entry</strong></h6>
+                          <ol class="mb-0 ms-3 small">
+                            <li class="mb-1">Enter or confirm <strong>customer information</strong> (name, phone, type)</li>
+                            <li class="mb-1">Fill in <strong>invoice details</strong> (number, date, reference)</li>
+                            <li class="mb-1">Enter <strong>payment information</strong> (amounts and method)</li>
+                            <li class="mb-1">Add <strong>line items</strong> (products/services and pricing)</li>
+                            <li>Review and <strong>submit</strong> to create the invoice</li>
+                          </ol>
+                        </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                      </div>
+                    </div>
+
+                    <!-- Step Indicator -->
+                    <div class="manual-entry-steps mb-4">
+                      <div class="row text-center g-2">
+                        <div class="col-md-2">
+                          <div class="step-badge active" data-step="1">
+                            <div class="step-number">1</div>
+                            <div class="step-label">Customer</div>
+                          </div>
+                        </div>
+                        <div class="col-md-2">
+                          <div class="step-badge" data-step="2">
+                            <div class="step-number">2</div>
+                            <div class="step-label">Invoice</div>
+                          </div>
+                        </div>
+                        <div class="col-md-2">
+                          <div class="step-badge" data-step="3">
+                            <div class="step-number">3</div>
+                            <div class="step-label">Payment</div>
+                          </div>
+                        </div>
+                        <div class="col-md-2">
+                          <div class="step-badge" data-step="4">
+                            <div class="step-number">4</div>
+                            <div class="step-label">Items</div>
+                          </div>
+                        </div>
+                        <div class="col-md-2">
+                          <div class="step-badge" data-step="5">
+                            <div class="step-number">5</div>
+                            <div class="step-label">Review</div>
+                          </div>
+                        </div>
+                        <div class="col-md-2">
+                          <div class="step-badge" data-step="6">
+                            <div class="step-number"><i class="fa fa-check"></i></div>
+                            <div class="step-label">Submit</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
                     <form id="manualInvoiceForm" method="post">
                       {% csrf_token %}
                       <input type="hidden" name="action" value="create_invoice_manual">
