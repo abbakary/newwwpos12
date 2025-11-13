@@ -614,11 +614,21 @@
                           <textarea name="notes" class="form-control" rows="2" placeholder="Any additional notes about this invoice"></textarea>
                         </div>
                       </div>
-                      <div class="modal-footer" style="border-top: 1px solid #dee2e6;">
-                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary">
-                          <i class="fa fa-save me-2"></i>Create Invoice
-                        </button>
+                      <div class="modal-footer" style="border-top: 1px solid #dee2e6; padding: 20px; background: #f8f9fa;">
+                        <div class="text-center w-100 mb-3">
+                          <p class="text-muted small mb-0">
+                            <i class="fa fa-info-circle me-1"></i>
+                            Fill in the required fields above, then click the button below to create the invoice.
+                          </p>
+                        </div>
+                        <div class="w-100 d-flex gap-2" style="margin-top: -15px;">
+                          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                            <i class="fa fa-times me-2"></i>Cancel
+                          </button>
+                          <button type="submit" class="btn btn-success btn-lg flex-grow-1" style="font-weight: 600;">
+                            <i class="fa fa-check-circle me-2"></i>Create Invoice
+                          </button>
+                        </div>
                       </div>
                     </form>
                   </div>
