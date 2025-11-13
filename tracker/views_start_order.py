@@ -243,26 +243,39 @@ def api_service_types(request):
 @login_required
 def started_orders_dashboard(request):
     """
-    Display all started orders (status='created') for the current branch.
-    Shows orders that have been initiated but not yet completed.
+    Display all started orders for the current branch (created, in_progress, and recently completed).
+    Shows orders that have been initiated and are being managed.
+    Completed orders remain visible so users can track them.
     Grouped by plate number for easy continuation.
 
     GET params:
-    - status: Filter by order status (default: 'created')
+    - status: Filter by order status (default: shows created, in_progress, completed from today/recent)
     - sort_by: Sort orders by 'started_at', 'plate_number', 'order_type' (default: '-started_at')
     - search: Search by plate number or customer name
     """
     user_branch = get_user_branch(request.user)
-    status_filter = request.GET.get('status', 'created')
+    status_filter = request.GET.get('status', '')
     sort_by = request.GET.get('sort_by', '-started_at')
     search_query = request.GET.get('search', '').strip()
 
-    # Get all started orders for this branch (status='created')
-    # Note: We include all orders with status='created', including those with temporary customers
-    orders = Order.objects.filter(
-        branch=user_branch,
-        status=status_filter
-    ).select_related('customer', 'vehicle')
+    # Default behavior: show created, in_progress, and today's completed orders
+    # This keeps recently completed orders visible on the dashboard
+    if status_filter:
+        # Specific status requested
+        orders = Order.objects.filter(
+            branch=user_branch,
+            status=status_filter
+        ).select_related('customer', 'vehicle')
+    else:
+        # Default: show active orders (created/in_progress) + completed from today
+        from django.db.models import Q
+        today = timezone.now().date()
+        orders = Order.objects.filter(
+            branch=user_branch
+        ).filter(
+            Q(status__in=['created', 'in_progress']) |  # All active orders
+            Q(status='completed', completed_at__date=today)  # Completed today
+        ).select_related('customer', 'vehicle')
 
     # Apply search filter
     if search_query:
