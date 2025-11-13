@@ -118,11 +118,21 @@
           <div class="modal fade" id="uploadInvoiceModal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-xl">
               <div class="modal-content">
-                <div class="modal-header bg-light">
+                <div class="modal-header bg-light border-bottom">
                   <h5 class="modal-title">
                     <i class="fa fa-file-invoice me-2"></i>Create Invoice for Order {{ order.order_number }}
                   </h5>
                   <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <!-- Quick Info Bar -->
+                <div class="alert alert-info mb-0 border-0 rounded-0" role="alert">
+                  <div class="d-flex align-items-center">
+                    <i class="fa fa-lightbulb me-3" style="font-size: 18px;"></i>
+                    <div>
+                      <strong>Tip:</strong> Upload a PDF invoice to auto-extract data, or enter details manually below.
+                    </div>
+                  </div>
                 </div>
 
                 <!-- Nav Tabs -->
