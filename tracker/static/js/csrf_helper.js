@@ -11,16 +11,20 @@ function getCSRFToken() {
   // First try to get from meta tag (preferred method)
   const metaTag = document.querySelector('meta[name="csrf-token"]');
   if (metaTag) {
-    return metaTag.getAttribute('content');
+    const token = metaTag.getAttribute('content');
+    if (token && token.length > 0) {
+      return token;
+    }
   }
 
   // Fallback to form field
   const tokenInput = document.querySelector('input[name="csrfmiddlewaretoken"]');
-  if (tokenInput) {
+  if (tokenInput && tokenInput.value) {
     return tokenInput.value;
   }
 
-  // If not found, return null
+  // If not found, log warning and return null
+  console.warn('CSRF token not found in meta tag or form fields. Some requests may fail.');
   return null;
 }
 
