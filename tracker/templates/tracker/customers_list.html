@@ -356,6 +356,65 @@
     </div>
   </div>
 </div>
+
+<!-- Start Order Modal -->
+<div class="modal fade" id="startOrderModal" tabindex="-1" aria-labelledby="startOrderModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="startOrderModalLabel">
+                    <i class="fa fa-rocket me-2"></i>Start Order
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="customer-info mb-4">
+                    <h6 class="text-muted mb-2">Customer</h6>
+                    <p class="mb-0">
+                        <strong id="modalCustomerName"></strong>
+                        <br>
+                        <small class="text-muted" id="modalCustomerPhone"></small>
+                    </p>
+                </div>
+
+                <div class="alert alert-info">
+                    <i class="fa fa-info-circle me-2"></i>
+                    <small>Choose how you want to create the order:</small>
+                </div>
+
+                <div class="order-method-options">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <button type="button" class="btn btn-outline-primary w-100 order-method-btn" data-method="quick">
+                                <i class="fa fa-flash me-2"></i>
+                                <div class="text-start">
+                                    <div class="fw-medium">Quick Start</div>
+                                    <small class="text-muted">Use plate number</small>
+                                </div>
+                            </button>
+                        </div>
+                        <div class="col-md-6">
+                            <button type="button" class="btn btn-outline-success w-100 order-method-btn" data-method="form">
+                                <i class="fa fa-form me-2"></i>
+                                <div class="text-start">
+                                    <div class="fw-medium">Full Form</div>
+                                    <small class="text-muted">Complete order form</small>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" id="proceedOrderBtn" disabled>
+                    <i class="fa fa-arrow-right me-2"></i>Proceed
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block extra_js %}
