@@ -77,31 +77,30 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Create customer item element
   function createCustomerItem(customer) {
-    const item = document.createElement('button');
-    item.type = 'button';
-    item.className = 'list-group-item list-group-item-action';
+    const item = document.createElement('div');
+    item.className = 'list-group-item';
     item.innerHTML = `
-      <div class="d-flex w-100 justify-content-between">
-        <h6 class="mb-1">${customer.name}</h6>
-        <small class="badge bg-secondary">#${customer.code || customer.id}</small>
-      </div>
-      <div class="d-flex justify-content-between">
-        <small class="text-muted">
-          <i class="fa fa-phone me-1"></i>${customer.phone || 'No phone'}
-        </small>
-        <small class="text-muted">
-          <i class="fa fa-envelope me-1"></i>${customer.email || 'No email'}
-        </small>
-      </div>
-      <div class="mt-1">
-        <span class="badge bg-light text-dark">${customer.customer_type_display || 'Personal'}</span>
-        ${customer.total_visits ? `<span class="badge bg-info ms-1">${customer.total_visits} visits</span>` : ''}
+      <div class="d-flex w-100 justify-content-between align-items-start">
+        <div style="flex: 1;">
+          <h6 class="mb-2"><i class="fa fa-user me-2"></i>${customer.name}</h6>
+          <div class="d-flex flex-wrap gap-2 mb-2">
+            <small class="text-muted">
+              <i class="fa fa-phone me-1"></i>${customer.phone || 'No phone'}
+            </small>
+            <small class="text-muted">
+              <i class="fa fa-envelope me-1"></i>${customer.email || 'No email'}
+            </small>
+          </div>
+          <div>
+            <span class="badge bg-light text-dark">${customer.customer_type_display || 'Personal'}</span>
+            ${customer.total_visits ? `<span class="badge bg-info ms-1"><i class="fa fa-history me-1"></i>${customer.total_visits} visits</span>` : ''}
+          </div>
+        </div>
+        <button type="button" class="btn btn-primary btn-sm ms-2 flex-shrink-0" onclick="window.location.href = '/customers/${customer.id}/order/new/'; return false;" title="Create order for this customer">
+          <i class="fa fa-play me-1"></i>Start Order
+        </button>
       </div>
     `;
-    item.addEventListener('click', () => {
-      // Redirect to create order page for this customer
-      window.location.href = `/customers/${customer.id}/order/new/`;
-    });
     return item;
   }
   
