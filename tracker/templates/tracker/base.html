@@ -438,6 +438,8 @@
     <script src="{% static 'assets/js/scrollbar/simplebar.js' %}"></script>
     <script src="{% static 'assets/js/scrollbar/custom.js' %}"></script>
     <script src="{% static 'assets/js/config.js' %}"></script>
+    <!-- CSRF Helper - Load early so other scripts can use it -->
+    <script src="{% static 'js/csrf_helper.js' %}"></script>
     <script src="{% static 'assets/js/sidebar-menu.js' %}"></script>
     <script src="{% static 'assets/js/sidebar-pin.js' %}"></script>
     <script src="{% static 'assets/js/slick/slick.min.js' %}"></script>
