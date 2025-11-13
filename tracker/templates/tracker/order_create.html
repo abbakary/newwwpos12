@@ -54,6 +54,59 @@
   {% endif %}
 
   {% if customer %}
+  <!-- Order Type Selection (appears before customer info) -->
+  <div class="container-fluid mb-3">
+    <div class="card border-primary">
+      <div class="card-header bg-light">
+        <h5 class="card-title mb-0">
+          <i class="fa fa-list me-2"></i>What would you like to do?
+        </h5>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-6 col-lg-3">
+            <div class="order-type-card card h-100 cursor-pointer border-2" data-order-type="new">
+              <div class="card-body text-center">
+                <i class="fa fa-plus-circle fs-1 text-primary mb-3 d-block"></i>
+                <h6 class="card-title">New Order</h6>
+                <p class="card-text small text-muted">Create a new service or sales order</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6 col-lg-3">
+            <div class="order-type-card card h-100 cursor-pointer border-2" data-order-type="invoice">
+              <div class="card-body text-center">
+                <i class="fa fa-file-invoice fs-1 text-success mb-3 d-block"></i>
+                <h6 class="card-title">Create Invoice</h6>
+                <p class="card-text small text-muted">Create or upload an invoice</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6 col-lg-3">
+            <div class="order-type-card card h-100 cursor-pointer border-2" data-order-type="orders">
+              <div class="card-body text-center">
+                <i class="fa fa-list fs-1 text-info mb-3 d-block"></i>
+                <h6 class="card-title">View Orders</h6>
+                <p class="card-text small text-muted">View and manage existing orders</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6 col-lg-3">
+            <div class="order-type-card card h-100 cursor-pointer border-2" data-order-type="quick">
+              <div class="card-body text-center">
+                <i class="fa fa-flash fs-1 text-warning mb-3 d-block"></i>
+                <h6 class="card-title">Quick Start</h6>
+                <p class="card-text small text-muted">Start an order with plate number</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Order Form Section (hidden by default, shown on selection) -->
+  <div id="orderFormSection" style="display:none;">
   <div class="container-fluid">
     <div class="card">
       <div class="card-body">
@@ -129,6 +182,7 @@
   </div>
   {% endif %}
 
+  <!-- Order Form Section Continues -->
   <div class="container-fluid">
     <div class="card">
       <div class="card-body">
@@ -167,6 +221,7 @@
       </div>
     </div>
   </div>
+  </div><!-- End of orderFormSection -->
 
   <!-- Add Vehicle Modal -->
   <div class="modal fade" id="addVehicleModal" tabindex="-1" aria-labelledby="addVehicleModalLabel" aria-hidden="true">
@@ -215,6 +270,52 @@
   {% block extra_js %}
   <script>
     (function(){
+      // Initialize order type selector
+      document.addEventListener('DOMContentLoaded', function(){
+        const orderTypeCards = document.querySelectorAll('.order-type-card');
+        const orderFormSection = document.getElementById('orderFormSection');
+        const typeSelect = document.getElementById('{{ form.type.id_for_label }}') || document.querySelector('[name="{{ form.type.html_name }}"]');
+
+        orderTypeCards.forEach(card => {
+          card.addEventListener('click', function(){
+            const orderType = this.getAttribute('data-order-type');
+
+            // Handle special cases
+            if (orderType === 'quick') {
+              // Redirect to quick start order page
+              window.location.href = '{% url "tracker:order_start" %}';
+              return;
+            }
+
+            if (orderType === 'orders') {
+              // Redirect to orders list
+              window.location.href = '{% url "tracker:orders_list" %}';
+              return;
+            }
+
+            if (orderType === 'invoice') {
+              // Redirect to invoice create for this customer
+              window.location.href = '{% url "tracker:invoice_create_from_order" order_id=0 %}'.replace('/0/', '/?customer_id={{ customer.id }}');
+              return;
+            }
+
+            // For 'new' order type, show the form section
+            if (orderType === 'new' && orderFormSection) {
+              // Remove previous selection styling
+              orderTypeCards.forEach(c => c.classList.remove('border-primary', 'bg-light'));
+              // Add selection styling to clicked card
+              this.classList.add('border-primary', 'bg-light');
+              // Show form section
+              orderFormSection.style.display = 'block';
+              // Scroll to form
+              setTimeout(() => {
+                orderFormSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }, 100);
+            }
+          });
+        });
+      });
+
       // Handle order type switching
       var typeEl = document.getElementById('{{ form.type.id_for_label }}') || document.querySelector('[name="{{ form.type.html_name }}"]');
       function updateSections(){
@@ -511,6 +612,37 @@
     })();
 
   </script>
+
+  <style>
+    .order-type-card {
+      transition: all 0.3s ease;
+      cursor: pointer;
+      border-color: #dee2e6 !important;
+    }
+
+    .order-type-card:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      transform: translateY(-2px);
+      border-color: #0d6efd !important;
+    }
+
+    .order-type-card.border-primary {
+      border-color: #0d6efd !important;
+      background-color: #f8f9fa;
+    }
+
+    .order-type-card i {
+      transition: all 0.3s ease;
+    }
+
+    .order-type-card:hover i {
+      color: #0d6efd !important;
+    }
+
+    .cursor-pointer {
+      cursor: pointer;
+    }
+  </style>
 
   {% endblock %}
 {% endblock %}

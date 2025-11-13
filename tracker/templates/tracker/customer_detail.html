@@ -349,6 +349,17 @@
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end">
                     <li>
+                        <a class="dropdown-item" href="{% url 'tracker:invoice_create' %}?customer_id={{ customer.pk }}">
+                            <i class="fa fa-file-invoice-dollar me-2"></i>Create Invoice
+                        </a>
+                    </li>
+                    <li>
+                        <button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#uploadInvoiceModal">
+                            <i class="fa fa-file-upload me-2"></i>Upload Invoice
+                        </button>
+                    </li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li>
                         <button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#addVehicleModal">
                             <i class="fa fa-car me-2"></i>Add Vehicle
                         </button>
@@ -940,6 +951,90 @@
         </div>
     </div>
 {% endif %}
+
+<!-- Upload Invoice Modal -->
+<div class="modal fade" id="uploadInvoiceModal" tabindex="-1" aria-labelledby="uploadInvoiceModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="uploadInvoiceModalLabel">
+                    <i class="fa fa-file-upload me-2"></i>Upload Invoice
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="uploadInvoiceForm" method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <input type="hidden" name="customer_id" value="{{ customer.pk }}">
+                    <div class="mb-3">
+                        <label for="invoiceFile" class="form-label">Select Invoice PDF</label>
+                        <input class="form-control" type="file" id="invoiceFile" name="document" accept=".pdf" required>
+                        <small class="form-text text-muted">PDF files only. Max 50MB.</small>
+                    </div>
+                    <div class="alert alert-info">
+                        <i class="fa fa-info-circle me-2"></i>
+                        The system will extract invoice details automatically and allow you to review before saving.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-success" id="uploadInvoiceBtn">
+                        <i class="fa fa-upload me-2"></i>Upload & Extract
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+    const uploadBtn = document.getElementById('uploadInvoiceBtn');
+    if (uploadBtn) {
+        uploadBtn.addEventListener('click', function(){
+            const fileInput = document.getElementById('invoiceFile');
+            const form = document.getElementById('uploadInvoiceForm');
+
+            if (!fileInput || !fileInput.files.length) {
+                alert('Please select a file');
+                return;
+            }
+
+            const file = fileInput.files[0];
+            const formData = new FormData();
+            formData.append('document', file);
+            formData.append('customer_id', '{{ customer.pk }}');
+            formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+
+            uploadBtn.disabled = true;
+            uploadBtn.innerHTML = '<i class="fa fa-spinner fa-spin me-2"></i>Uploading...';
+
+            fetch('{% url "tracker:api_upload_extract_invoice" %}', {
+                method: 'POST',
+                body: formData,
+                headers: {'X-Requested-With': 'XMLHttpRequest'}
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success && data.invoice_id) {
+                    // Redirect to invoice detail page
+                    window.location.href = '{% url "tracker:invoice_detail" invoice_id=0 %}'.replace('/0/', '/' + data.invoice_id + '/');
+                } else {
+                    alert('Error: ' + (data.error || 'Upload failed'));
+                    uploadBtn.disabled = false;
+                    uploadBtn.innerHTML = '<i class="fa fa-upload me-2"></i>Upload & Extract';
+                }
+            })
+            .catch(err => {
+                alert('Error: ' + err.message);
+                uploadBtn.disabled = false;
+                uploadBtn.innerHTML = '<i class="fa fa-upload me-2"></i>Upload & Extract';
+            });
+        });
+    }
+});
+</script>
+
 {% endblock %}
 
 {% block extra_js %}
