@@ -4275,6 +4275,40 @@ def profile(request: HttpRequest):
     })
 
 @login_required
+def api_check_customer_exists(request: HttpRequest):
+    """Quick customer existence check for registration workflow."""
+    phone = (request.GET.get("phone") or "").strip()
+
+    if not phone:
+        return JsonResponse({"exists": False})
+
+    user_branch = get_user_branch(request.user)
+
+    c = Customer.objects.filter(
+        phone=phone,
+        branch=user_branch
+    ).exclude(
+        full_name__icontains="Plate "
+    ).first()
+
+    if not c:
+        return JsonResponse({"exists": False})
+
+    data = {
+        "id": c.id,
+        "code": c.code,
+        "full_name": c.full_name,
+        "phone": c.phone,
+        "email": c.email or "",
+        "customer_type": c.customer_type or "",
+        "organization_name": c.organization_name or "",
+        "total_visits": c.total_visits,
+        "detail_url": reverse("tracker:customer_detail", kwargs={"pk": c.id}),
+    }
+    return JsonResponse({"exists": True, "customer": data})
+
+
+@login_required
 def api_check_customer_duplicate(request: HttpRequest):
     full_name = (request.GET.get("full_name") or "").strip()
     phone = (request.GET.get("phone") or "").strip()
