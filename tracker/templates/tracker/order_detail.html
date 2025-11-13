@@ -664,7 +664,7 @@
             <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#attachmentModal">
               <i class="fa fa-plus me-1"></i>Add Files
             </button>
-            <button type="button" class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#completeModal">
+            <button type="button" class="btn btn-sm btn-success complete-order-trigger">
               <i class="fa fa-pen me-1"></i>Capture Signature
             </button>
           </div>
@@ -731,7 +731,7 @@
                     </a>
                   </div>
                   {% elif order.status != 'completed' and order.status != 'cancelled' and order.type != 'inquiry' %}
-                  <button type="button" class="btn btn-sm btn-outline-info w-100 mt-2" data-bs-toggle="modal" data-bs-target="#completeModal">
+                  <button type="button" class="btn btn-sm btn-outline-info w-100 mt-2 complete-order-trigger">
                     <i class="fa fa-plus me-1"></i>Add Document
                   </button>
                   {% endif %}
@@ -762,7 +762,7 @@
                     </a>
                   </div>
                   {% elif order.status != 'completed' and order.status != 'cancelled' and order.type != 'inquiry' %}
-                  <button type="button" class="btn btn-sm btn-success w-100 mt-2" data-bs-toggle="modal" data-bs-target="#completeModal">
+                  <button type="button" class="btn btn-sm btn-success w-100 mt-2 complete-order-trigger">
                     <i class="fa fa-pen me-1"></i>Capture Signature
                   </button>
                   {% endif %}
