@@ -456,6 +456,69 @@
         window.orderStartModal.open();
       });
     }
+
+    // Handle complete order buttons with AJAX
+    document.querySelectorAll('.complete-order-btn').forEach(function(btn) {
+      btn.addEventListener('click', function(e) {
+        e.preventDefault();
+
+        const orderId = this.getAttribute('data-order-id');
+        const orderNumber = this.getAttribute('data-order-number');
+
+        if (!confirm(`Mark order ${orderNumber} as completed?`)) {
+          return;
+        }
+
+        const btn = this;
+        const originalHtml = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa fa-spinner fa-spin me-1"></i>Saving...';
+
+        fetch(`/orders/${orderId}/complete/`, {
+          method: 'POST',
+          headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'X-Requested-With': 'XMLHttpRequest'
+          }
+        })
+        .then(response => {
+          if (response.ok) {
+            // Update the card UI without reloading page
+            const card = btn.closest('.started-order-card');
+
+            // Update status badge
+            const statusBadge = card.querySelector('[class*="badge"]');
+            if (statusBadge) {
+              // Find the badge in the header
+              const headerBadges = card.querySelector('.card-header').querySelectorAll('.badge');
+              if (headerBadges.length > 0) {
+                headerBadges[0].className = 'badge bg-success rounded-pill';
+                headerBadges[0].innerHTML = '<i class="fa fa-check me-1"></i>Completed';
+              }
+            }
+
+            // Replace button with disabled completed button
+            const footerBtnDiv = btn.parentElement;
+            footerBtnDiv.innerHTML = '<span class="btn btn-sm btn-success w-100 disabled" style="pointer-events: none;"><i class="fa fa-check me-1"></i>Completed</span>';
+
+            // Show success toast
+            if (typeof showToast === 'function') {
+              showToast(`Order ${orderNumber} completed successfully`, 'success');
+            } else {
+              alert(`Order ${orderNumber} completed successfully`);
+            }
+          } else {
+            throw new Error('Failed to complete order');
+          }
+        })
+        .catch(error => {
+          console.error('Error completing order:', error);
+          btn.innerHTML = originalHtml;
+          btn.disabled = false;
+          alert('Error completing order. Please try again.');
+        });
+      });
+    });
   });
 </script>
 
