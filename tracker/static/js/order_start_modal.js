@@ -6,9 +6,11 @@
 class OrderStartModal {
   constructor() {
     this.modal = null;
-    this.currentStep = 1;
-    this.totalSteps = 3;
+    this.currentStep = 0;
+    this.totalSteps = 4;
     this.formData = {};
+    this.foundCustomer = null;
+    this.foundVehicle = null;
     this.init();
   }
 
@@ -23,6 +25,27 @@ class OrderStartModal {
 
   attachEventListeners() {
     const self = this;
+
+    // Quick lookup functionality
+    const quickSearchBtn = document.getElementById('quickSearchBtn');
+    const skipQuickStartBtn = document.getElementById('skipQuickStartBtn');
+    const quickSearchPlate = document.getElementById('quickSearchPlate');
+
+    if (quickSearchBtn) {
+      quickSearchBtn.addEventListener('click', () => self.performQuickLookup());
+    }
+
+    if (skipQuickStartBtn) {
+      skipQuickStartBtn.addEventListener('click', () => self.skipQuickLookup());
+    }
+
+    if (quickSearchPlate) {
+      quickSearchPlate.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          self.performQuickLookup();
+        }
+      });
+    }
 
     // Order type selection
     document.querySelectorAll('.order-type-option').forEach(option => {
@@ -118,7 +141,7 @@ class OrderStartModal {
   }
 
   prevStep() {
-    if (this.currentStep > 1) {
+    if (this.currentStep > 0) {
       this.showStep(this.currentStep - 1);
     }
   }
@@ -135,7 +158,7 @@ class OrderStartModal {
     });
 
     // Show current step and previous completed steps
-    for (let i = 1; i <= stepNumber; i++) {
+    for (let i = 0; i <= stepNumber; i++) {
       const step = document.getElementById(`step${i}`);
       const badge = document.querySelector(`.step-badge[data-step="${i}"]`);
 
@@ -152,9 +175,9 @@ class OrderStartModal {
     const nextBtn = document.getElementById('nextBtn');
     const submitBtn = document.getElementById('submitBtn');
 
-    prevBtn.style.display = stepNumber === 1 ? 'none' : 'block';
-    nextBtn.style.display = stepNumber === this.totalSteps ? 'none' : 'block';
-    submitBtn.style.display = stepNumber === this.totalSteps ? 'block' : 'none';
+    prevBtn.style.display = stepNumber === 0 ? 'none' : 'block';
+    nextBtn.style.display = stepNumber === this.totalSteps - 1 ? 'none' : 'block';
+    submitBtn.style.display = stepNumber === this.totalSteps - 1 ? 'block' : 'none';
 
     this.currentStep = stepNumber;
 
@@ -168,6 +191,9 @@ class OrderStartModal {
     this.clearAllErrors();
 
     switch (stepNumber) {
+      case 0:
+        // Step 0 (quick lookup) is optional - always return true
+        return true;
       case 1:
         return this.validateOrderType();
       case 2:
@@ -292,39 +318,61 @@ class OrderStartModal {
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Creating...';
 
-    // Submit to server
-    fetch('/api/orders/create-from-modal/', {
-      method: 'POST',
-      body: formData
+    // Submit to server using CSRF helper
+    postWithCSRF('/api/orders/create-from-modal/', formData)
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      return response.json();
     })
-    .then(response => response.json())
     .then(data => {
       if (data.success) {
         // Show success message
         this.showSuccessMessage('Order created successfully!');
+
+        // Show toast notification
+        if (typeof showToast === 'function') {
+          showToast(`Order ${data.order_number} created successfully`, 'success');
+        }
 
         // Redirect or close modal
         setTimeout(() => {
           window.location.href = `/tracker/orders/started/${data.order_id}/`;
         }, 1500);
       } else {
-        this.showError('extractedDataError', data.error || 'Failed to create order');
+        const errorMsg = data.error || 'Failed to create order';
+        this.showError('extractedDataError', errorMsg);
         submitBtn.disabled = false;
         submitBtn.innerHTML = originalText;
+
+        // Show toast notification
+        if (typeof showToast === 'function') {
+          showToast(errorMsg, 'error');
+        }
       }
     })
     .catch(error => {
-      this.showError('extractedDataError', 'An error occurred: ' + error.message);
+      const errorMsg = 'An error occurred: ' + (error.message || 'Unknown error');
+      console.error('Error creating order:', error);
+      this.showError('extractedDataError', errorMsg);
       submitBtn.disabled = false;
       submitBtn.innerHTML = originalText;
+
+      // Show toast notification
+      if (typeof showToast === 'function') {
+        showToast('Failed to create order. Please try again.', 'error');
+      }
     });
   }
 
   resetForm() {
     document.getElementById('orderStartForm').reset();
     this.formData = {};
-    this.currentStep = 1;
-    this.showStep(1);
+    this.foundCustomer = null;
+    this.foundVehicle = null;
+    this.currentStep = 0;
+    this.showStep(0);
   }
 
   showError(elementId, message) {
@@ -369,6 +417,81 @@ class OrderStartModal {
       <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     `;
     document.body.insertBefore(alert, document.body.firstChild);
+  }
+
+  performQuickLookup() {
+    const plate = document.getElementById('quickSearchPlate').value.trim().toUpperCase();
+
+    // Hide previous results
+    document.getElementById('quickLookupResult').style.display = 'none';
+    document.getElementById('plateNotFoundAlert').style.display = 'none';
+    document.getElementById('quickLookupError').style.display = 'none';
+
+    if (!plate) {
+      this.showQuickLookupError('Please enter a vehicle plate number');
+      return;
+    }
+
+    // Show loading state
+    const btn = document.getElementById('quickSearchBtn');
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa fa-spinner fa-spin me-2"></i>Searching...';
+
+    // Call API to check plate
+    fetch('/api/orders/check-plate/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCSRFToken() || '',
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      body: JSON.stringify({ plate_number: plate })
+    })
+    .then(r => r.json())
+    .then(data => {
+      btn.disabled = false;
+      btn.innerHTML = originalText;
+
+      if (data.found && data.customer && data.vehicle) {
+        // Show existing customer info
+        document.getElementById('existingCustomerName').textContent = data.customer.full_name;
+        document.getElementById('existingVehicleInfo').textContent = `${data.vehicle.make} ${data.vehicle.model} (${data.vehicle.plate})`;
+        document.getElementById('existingCustomerPhone').textContent = data.customer.phone;
+        document.getElementById('existingOrderStatus').textContent = 'Existing Customer';
+        document.getElementById('quickLookupResult').style.display = 'block';
+
+        // Store customer info for later use
+        this.foundCustomer = data.customer;
+        this.foundVehicle = data.vehicle;
+      } else {
+        // No existing record found
+        document.getElementById('plateNotFoundAlert').style.display = 'block';
+        this.foundCustomer = null;
+        this.foundVehicle = null;
+      }
+    })
+    .catch(error => {
+      btn.disabled = false;
+      btn.innerHTML = originalText;
+      console.error('Lookup error:', error);
+      this.showQuickLookupError('Error checking plate number. Please try again.');
+    });
+  }
+
+  skipQuickLookup() {
+    // Clear plate info and move to next step
+    this.foundCustomer = null;
+    this.foundVehicle = null;
+    this.showStep(1);
+  }
+
+  showQuickLookupError(message) {
+    const errorDiv = document.getElementById('quickLookupError');
+    if (errorDiv) {
+      document.getElementById('quickLookupErrorText').textContent = message;
+      errorDiv.style.display = 'block';
+    }
   }
 
   open() {

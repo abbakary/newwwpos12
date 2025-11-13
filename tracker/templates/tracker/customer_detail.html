@@ -1004,7 +1004,10 @@ document.addEventListener('DOMContentLoaded', function(){
             const formData = new FormData();
             formData.append('document', file);
             formData.append('customer_id', '{{ customer.pk }}');
-            formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+            const csrfToken = getCSRFToken();
+            if (csrfToken) {
+              formData.append('csrfmiddlewaretoken', csrfToken);
+            }
 
             uploadBtn.disabled = true;
             uploadBtn.innerHTML = '<i class="fa fa-spinner fa-spin me-2"></i>Uploading...';

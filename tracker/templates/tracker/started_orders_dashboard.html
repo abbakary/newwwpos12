@@ -445,7 +445,8 @@
 <!-- Include Order Start Modal -->
 {% include 'tracker/modals/order_start_modal.html' %}
 
-<!-- Order Start Modal JavaScript -->
+<!-- CSRF Helper and Order Start Modal JavaScript -->
+<script src="{% static 'js/csrf_helper.js' %}"></script>
 <script src="{% static 'js/order_start_modal.js' %}"></script>
 
 <script>
@@ -475,12 +476,8 @@
         btn.disabled = true;
         btn.innerHTML = '<i class="fa fa-spinner fa-spin me-1"></i>Saving...';
 
-        fetch(`/orders/${orderId}/complete/`, {
-          method: 'POST',
-          headers: {
-            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
-            'X-Requested-With': 'XMLHttpRequest'
-          }
+        fetchWithCSRF(`/orders/${orderId}/complete/`, {
+          method: 'POST'
         })
         .then(response => {
           if (response.ok) {

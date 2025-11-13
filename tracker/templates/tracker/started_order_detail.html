@@ -717,11 +717,11 @@
               }
 
               container.innerHTML = 'Loading...';
-              fetch('{% url "tracker:api_service_types" %}', { 
-                method: 'GET', 
-                headers: { 
-                  'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value, 
-                  'X-Requested-With': 'XMLHttpRequest' 
+              fetch('{% url "tracker:api_service_types" %}', {
+                method: 'GET',
+                headers: {
+                  'X-CSRFToken': getCSRFToken() || '',
+                  'X-Requested-With': 'XMLHttpRequest'
                 }
               })
               .then(r => {
@@ -974,10 +974,8 @@
 
               // ===== Utility Functions =====
               function getCSRF(){
-                const name = 'csrftoken=';
-                const parts = document.cookie.split(';');
-                for (let i=0;i<parts.length;i++){ const c = parts[i].trim(); if (c.indexOf(name)===0) return c.substring(name.length); }
-                return document.querySelector('[name=csrfmiddlewaretoken]') ? document.querySelector('[name=csrfmiddlewaretoken]').value : '';
+                // Use global getCSRFToken() helper from csrf_helper.js
+                return getCSRFToken() || '';
               }
 
               function showError(message, isDanger = true){
@@ -2009,7 +2007,7 @@ document.addEventListener('DOMContentLoaded', function(){
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+          'X-CSRFToken': getCSRFToken() || '',
           'X-Requested-With': 'XMLHttpRequest'
         },
         body: JSON.stringify({ reason: reason })
