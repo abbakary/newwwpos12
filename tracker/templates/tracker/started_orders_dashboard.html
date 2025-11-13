@@ -143,7 +143,8 @@
               <div class="col-xl-2 col-lg-4 col-md-6">
                 <label class="form-label fw-medium">Status</label>
                 <select name="status" class="form-select">
-                  <option value="created" {% if status_filter == 'created' %}selected{% endif %}>Created</option>
+                  <option value="" {% if not status_filter %}selected{% endif %}>Active + Today's Completed</option>
+                  <option value="created" {% if status_filter == 'created' %}selected{% endif %}>Created Only</option>
                   <option value="in_progress" {% if status_filter == 'in_progress' %}selected{% endif %}>In Progress</option>
                   <option value="completed" {% if status_filter == 'completed' %}selected{% endif %}>Completed</option>
                 </select>
@@ -270,12 +271,13 @@
               <i class="fa fa-file-upload me-1"></i>Documents
             </a>
             {% if order.status != 'completed' %}
-            <form method="post" action="{% url 'tracker:complete_order' pk=order.id %}" class="flex-fill" onsubmit="return confirm('Mark this order as completed?');">
-              {% csrf_token %}
-              <button type="submit" class="btn btn-sm btn-outline-success w-100">
-                <i class="fa fa-check me-1"></i>Complete
-              </button>
-            </form>
+            <button type="button" class="btn btn-sm btn-outline-success w-100 complete-order-btn" data-order-id="{{ order.id }}" data-order-number="{{ order.order_number }}">
+              <i class="fa fa-check me-1"></i>Complete
+            </button>
+            {% else %}
+            <span class="btn btn-sm btn-success w-100 disabled" style="pointer-events: none;">
+              <i class="fa fa-check me-1"></i>Completed
+            </span>
             {% endif %}
           </div>
         </div>
@@ -455,6 +457,69 @@
         window.orderStartModal.open();
       });
     }
+
+    // Handle complete order buttons with AJAX
+    document.querySelectorAll('.complete-order-btn').forEach(function(btn) {
+      btn.addEventListener('click', function(e) {
+        e.preventDefault();
+
+        const orderId = this.getAttribute('data-order-id');
+        const orderNumber = this.getAttribute('data-order-number');
+
+        if (!confirm(`Mark order ${orderNumber} as completed?`)) {
+          return;
+        }
+
+        const btn = this;
+        const originalHtml = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa fa-spinner fa-spin me-1"></i>Saving...';
+
+        fetch(`/orders/${orderId}/complete/`, {
+          method: 'POST',
+          headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'X-Requested-With': 'XMLHttpRequest'
+          }
+        })
+        .then(response => {
+          if (response.ok) {
+            // Update the card UI without reloading page
+            const card = btn.closest('.started-order-card');
+
+            // Update status badge
+            const statusBadge = card.querySelector('[class*="badge"]');
+            if (statusBadge) {
+              // Find the badge in the header
+              const headerBadges = card.querySelector('.card-header').querySelectorAll('.badge');
+              if (headerBadges.length > 0) {
+                headerBadges[0].className = 'badge bg-success rounded-pill';
+                headerBadges[0].innerHTML = '<i class="fa fa-check me-1"></i>Completed';
+              }
+            }
+
+            // Replace button with disabled completed button
+            const footerBtnDiv = btn.parentElement;
+            footerBtnDiv.innerHTML = '<span class="btn btn-sm btn-success w-100 disabled" style="pointer-events: none;"><i class="fa fa-check me-1"></i>Completed</span>';
+
+            // Show success toast
+            if (typeof showToast === 'function') {
+              showToast(`Order ${orderNumber} completed successfully`, 'success');
+            } else {
+              alert(`Order ${orderNumber} completed successfully`);
+            }
+          } else {
+            throw new Error('Failed to complete order');
+          }
+        })
+        .catch(error => {
+          console.error('Error completing order:', error);
+          btn.innerHTML = originalHtml;
+          btn.disabled = false;
+          alert('Error completing order. Please try again.');
+        });
+      });
+    });
   });
 </script>
 

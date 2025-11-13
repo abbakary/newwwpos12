@@ -349,11 +349,13 @@
             <div class="time-tracking-stat">
               <span class="time-tracking-label">Actual</span>
               <span class="time-tracking-value" id="timeActualValue">
-                {% if order.actual_duration %}
-                  {{ order.actual_duration }} mins
-                {% else %}
-                  Pending
-                {% endif %}
+                {% with actual_mins=order|actual_time_minutes %}
+                  {% if actual_mins %}
+                    {{ actual_mins|format_minutes }}
+                  {% else %}
+                    Pending
+                  {% endif %}
+                {% endwith %}
               </span>
             </div>
           </div>
@@ -664,7 +666,7 @@
             <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#attachmentModal">
               <i class="fa fa-plus me-1"></i>Add Files
             </button>
-            <button type="button" class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#completeModal">
+            <button type="button" class="btn btn-sm btn-success complete-order-trigger">
               <i class="fa fa-pen me-1"></i>Capture Signature
             </button>
           </div>
@@ -731,7 +733,7 @@
                     </a>
                   </div>
                   {% elif order.status != 'completed' and order.status != 'cancelled' and order.type != 'inquiry' %}
-                  <button type="button" class="btn btn-sm btn-outline-info w-100 mt-2" data-bs-toggle="modal" data-bs-target="#completeModal">
+                  <button type="button" class="btn btn-sm btn-outline-info w-100 mt-2 complete-order-trigger">
                     <i class="fa fa-plus me-1"></i>Add Document
                   </button>
                   {% endif %}
@@ -762,7 +764,7 @@
                     </a>
                   </div>
                   {% elif order.status != 'completed' and order.status != 'cancelled' and order.type != 'inquiry' %}
-                  <button type="button" class="btn btn-sm btn-success w-100 mt-2" data-bs-toggle="modal" data-bs-target="#completeModal">
+                  <button type="button" class="btn btn-sm btn-success w-100 mt-2 complete-order-trigger">
                     <i class="fa fa-pen me-1"></i>Capture Signature
                   </button>
                   {% endif %}
@@ -1139,6 +1141,16 @@
     }catch(e){ return false; }
   }
 
+  function openSignatureModal(){
+    if (overrunModal) {
+      const instance = bootstrap.Modal.getInstance(overrunModalEl);
+      if (instance) instance.hide();
+    }
+    if (completeModalEl) {
+      new bootstrap.Modal(completeModalEl).show();
+    }
+  }
+
   function ensureAndSubmit(){
     if (!needsOverrun()){
       completeForm.submit();
@@ -1155,7 +1167,27 @@
     if (overrunModal) overrunModal.show();
   }
 
-  // Attach handlers
+  function openCompleteFlow(){
+    if (!needsOverrun()){
+      // No overrun, open signature modal directly
+      openSignatureModal();
+      return;
+    }
+    // if order already has overrun reason on server, open signature modal directly
+    if (hiddenOverrun && hiddenOverrun.value) {
+      openSignatureModal();
+      return;
+    }
+    // Order exceeds ETA: show reason modal first
+    if (overrunModal) overrunModal.show();
+  }
+
+  // Attach handlers to complete-order-trigger buttons (from document)
+  document.querySelectorAll('.complete-order-trigger').forEach(function(btn){
+    btn.addEventListener('click', openCompleteFlow);
+  });
+
+  // Attach handlers to buttons inside signature modal
   if (footerBtn) footerBtn.addEventListener('click', ensureAndSubmit);
   if (signAndCompleteBtn) signAndCompleteBtn.addEventListener('click', ensureAndSubmit);
 
@@ -1164,9 +1196,9 @@
       const v = (overrunTextarea.value||'').trim();
       overrunError.style.display = 'none';
       if (!v){ overrunError.textContent = 'Please provide a reason for the delay.'; overrunError.style.display = ''; return; }
-      // Set hidden input and submit the form
+      // Set hidden input
       if (hiddenOverrun) hiddenOverrun.value = v;
-      // Also try to persist via AJAX to API (best-effort)
+      // Persist via AJAX to API
       fetch('{% url "tracker:api_report_overrun" order_id=order.id %}', {
         method: 'POST',
         headers: {
@@ -1177,7 +1209,8 @@
         body: JSON.stringify({ reason: v })
       }).finally(() => {
         if (overrunModal) overrunModal.hide();
-        completeForm.submit();
+        // Open signature modal after reason is saved
+        openSignatureModal();
       });
     });
   }
